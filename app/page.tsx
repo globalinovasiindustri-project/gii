@@ -4,7 +4,7 @@ import { BrandSection } from "@/components/landing-page/brand-section";
 import { GuaranteeSection } from "@/components/landing-page/guarantee-section";
 import { ProductCarouselSection } from "@/components/product-carousel-section";
 import { SiteFooter } from "@/components/common/site-footer";
-import { TillDeathBundleSection } from "@/components/till-death-bundle-section";
+import { BundleSection } from "@/components/bundle-section";
 import { StoryBanner } from "@/components/story-banner";
 import { formatPrice } from "@/lib/utils/product.utils";
 import { productService } from "@/lib/services/product.service";
@@ -99,7 +99,7 @@ export default async function Home() {
             title="Paling Laris"
             products={randomProducts}
           />
-          <TillDeathBundleSection />
+          <BundleSection />
           <StoryBanner />
         </div>
         <SiteFooter />

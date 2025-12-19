@@ -9,5 +9,23 @@ export const loginSchema = z.object({
   email: z.string().email({ message: "Email tidak valid" }),
 });
 
+// Profile update validation schema (Requirement 4.3, 4.4, 4.5)
+export const profileFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, { message: "Nama harus diisi" })
+    .max(100, { message: "Nama maksimal 100 karakter" }),
+  email: z.string().email({ message: "Email tidak valid" }), // Read-only, included for display
+  phone: z
+    .string()
+    .regex(/^(\+62|62|0)?[0-9]{9,13}$/, {
+      message: "Format nomor telepon tidak valid (contoh: 08123456789)",
+    })
+    .or(z.literal(""))
+    .optional()
+    .transform((val) => val || null),
+});
+
 export type RegisterFormInput = z.infer<typeof registerSchema>;
 export type LoginFormInput = z.infer<typeof loginSchema>;
+export type ProfileFormSchema = z.infer<typeof profileFormSchema>;

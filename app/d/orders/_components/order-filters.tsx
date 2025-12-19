@@ -55,11 +55,9 @@ export function OrderFilters({
         <SelectContent>
           <SelectItem value="all">All Orders</SelectItem>
           <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="processing">Processing</SelectItem>
           <SelectItem value="shipped">Shipped</SelectItem>
           <SelectItem value="delivered">Delivered</SelectItem>
           <SelectItem value="cancelled">Cancelled</SelectItem>
-          <SelectItem value="refunded">Refunded</SelectItem>
         </SelectContent>
       </Select>
 
@@ -72,7 +70,7 @@ export function OrderFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Payments</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="pending">Unpaid</SelectItem>
           <SelectItem value="paid">Paid</SelectItem>
           <SelectItem value="failed">Failed</SelectItem>
           <SelectItem value="refunded">Refunded</SelectItem>

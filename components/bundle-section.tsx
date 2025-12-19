@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function TillDeathBundleSection() {
+export function BundleSection() {
   return (
     <section className="w-full px-4 md:px-8">
       <div className="grid gap-8 lg:grid-cols-2">

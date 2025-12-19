@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Search, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CartDrawer } from "@/components/cart-drawer";
@@ -28,73 +29,54 @@ export function MainNavigation() {
   }, []);
 
   return (
-    <nav className="w-full z-50 top-0 flex items-center justify-between bg-background/80 backdrop-blur-md border-b border-foreground-200 px-4 h-[64px] md:h-[80px] md:px-8 space-x-16">
-      <div className="flex flex-1 justify-between items-center space-x-4">
-        <div className="flex items-center">
-          <Button variant="ghost" size="icon" aria-label="Search">
-            <Search className="size-5" strokeWidth={1.5} />
-          </Button>
-        </div>
-        <div className="flex items-center justify-start">
-          <ul className="hidden space-x-12 md:flex">
-            <li>
-              <Link href="/" className="hover:text-primary" prefetch={true}>
-                Beranda
-              </Link>
-            </li>
-            <li>
-              <Link href="/contact" className="hover:text-primary">
-                Kontak
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div className="flex-0 text-center">
-        <Link
-          href="/"
-          className="text-2xl font-semibold uppercase tracking-widest"
-        >
-          Gii
+    <nav className="w-full z-50 top-0 flex items-center justify-between bg-background/80 backdrop-blur-md border-b border-foreground-200 px-4 h-[64px] md:h-[80px] md:px-8">
+      {/* Left: Logo + Menu */}
+      <div className="flex items-center space-x-12">
+        <Link href="/">
+          <Image src="/logo.png" width={100} height={40} alt="logo" />
         </Link>
+
+        <ul className="hidden items-center space-x-10 md:flex">
+          <li>
+            <Link href="/shop" className="hover:text-primary" prefetch={true}>
+              Smartphone
+            </Link>
+          </li>
+          <li>
+            <Link href="/contact" className="hover:text-primary">
+              Elektronik
+            </Link>
+          </li>
+          <li>
+            <Link href="/contact" className="hover:text-primary">
+              Komputer
+            </Link>
+          </li>
+        </ul>
       </div>
-      <div className="flex flex-1 justify-between items-center space-x-4">
-        <div className="flex items-center justify-start">
-          <ul className="hidden space-x-12 md:flex">
-            <li>
-              <Link href="/shop" className="hover:text-primary" prefetch={true}>
-                Produk
-              </Link>
-            </li>
-            <li>
-              <Link href="/auth/signup" className="hover:text-primary">
-                Daftar
-              </Link>
-            </li>
-          </ul>
-        </div>
-        <div className="flex items-center">
-          <UserMenu />
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Shopping Cart"
-            onClick={() => setIsCartOpen(true)}
-            className="relative"
-          >
-            <ShoppingCart className="size-5" strokeWidth={1.5} />
-            {/* Only show badge after hydration (Requirement 9.5) */}
-            {isMounted && totalItems > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-all duration-200 ease-in-out"
-              >
-                {totalItems > 99 ? "99+" : totalItems}
-              </Badge>
-            )}
-          </Button>
-          <CartDrawer open={isCartOpen} onOpenChange={setIsCartOpen} />
-        </div>
+
+      {/* Right: User + Cart */}
+      <div className="flex items-center gap-1">
+        <UserMenu />
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Shopping Cart"
+          onClick={() => setIsCartOpen(true)}
+          className="relative"
+        >
+          <ShoppingCart className="size-5" strokeWidth={1.5} />
+          {/* Only show badge after hydration (Requirement 9.5) */}
+          {isMounted && totalItems > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-all duration-200 ease-in-out"
+            >
+              {totalItems > 99 ? "99+" : totalItems}
+            </Badge>
+          )}
+        </Button>
+        <CartDrawer open={isCartOpen} onOpenChange={setIsCartOpen} />
       </div>
     </nav>
   );

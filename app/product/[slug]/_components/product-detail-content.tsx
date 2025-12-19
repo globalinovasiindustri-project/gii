@@ -12,6 +12,7 @@ import type {
   SelectProductVariant,
   SelectProduct,
 } from "@/lib/db/schema";
+import type { ValidVariantCombinations } from "@/lib/types/product.types";
 
 interface CompleteProduct {
   productGroup: SelectProductGroup & {
@@ -31,6 +32,8 @@ interface VariantOption {
   type: string;
   value: string;
   available: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 export function ProductDetailContent({
@@ -51,35 +54,113 @@ export function ProductDetailContent({
     null
   );
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [validCombinations, setValidCombinations] =
+    useState<ValidVariantCombinations | null>(null);
+  const [availableOptions, setAvailableOptions] = useState<
+    Record<string, Set<string>>
+  >({});
 
-  // Initialize selected variants with first available option for each variant type
+  // Load valid combinations on component mount
   useEffect(() => {
-    const variantGroups = getVariantGroups();
-    const initialVariants: Record<string, string> = {};
+    async function loadValidCombinations() {
+      try {
+        const response = await fetch(
+          `/api/products/${productGroup.id}/valid-combinations`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to load valid combinations");
+        }
+        const data = await response.json();
+        const combinations: ValidVariantCombinations = data.data;
+        setValidCombinations(combinations);
 
-    variantGroups.forEach((group) => {
-      const firstAvailable = group.options.find((opt) => opt.available);
-      if (firstAvailable) {
-        initialVariants[group.type] = firstAvailable.value;
+        // Initialize selected variants with first available option for each variant type
+        const initialVariants: Record<string, string> = {};
+
+        for (const variantType of combinations.variantTypes) {
+          // Find first available value for this variant type
+          const availableValues = Object.entries(
+            combinations.availabilityMap[variantType] || {}
+          )
+            .filter(([_, isAvailable]) => isAvailable)
+            .map(([value]) => value);
+
+          if (availableValues.length > 0) {
+            // Find first combination with stock > 0 for this variant type
+            const firstWithStock = combinations.combinations.find(
+              (combo) =>
+                combo.variants[variantType] === availableValues[0] &&
+                combo.stock > 0
+            );
+
+            if (firstWithStock) {
+              initialVariants[variantType] =
+                firstWithStock.variants[variantType];
+            } else {
+              initialVariants[variantType] = availableValues[0];
+            }
+          }
+        }
+
+        setSelectedVariants(initialVariants);
+        updateAvailableOptions(initialVariants, combinations);
+      } catch (error) {
+        console.error("Failed to load valid combinations:", error);
+        toast.error("Gagal memuat kombinasi varian");
       }
-    });
-
-    setSelectedVariants(initialVariants);
-  }, []);
-
-  // Update selected product when variants change (using random selection for now)
-  useEffect(() => {
-    if (Object.keys(selectedVariants).length > 0) {
-      selectRandomProduct();
     }
-  }, [selectedVariants]);
+
+    loadValidCombinations();
+  }, [productGroup.id]);
+
+  // Calculate which options are available based on current selections
+  const updateAvailableOptions = (
+    currentSelections: Record<string, string>,
+    combinations: ValidVariantCombinations
+  ) => {
+    const available: Record<string, Set<string>> = {};
+
+    // For each variant type
+    for (const variantType of combinations.variantTypes) {
+      available[variantType] = new Set();
+
+      // Check each combination
+      for (const combo of combinations.combinations) {
+        // If this combination matches all current selections (except this variant type)
+        const matches = Object.entries(currentSelections).every(
+          ([type, value]) =>
+            type === variantType || combo.variants[type] === value
+        );
+
+        // Only mark as available if it matches and has stock
+        if (matches && combo.stock > 0) {
+          available[variantType].add(combo.variants[variantType]);
+        }
+      }
+    }
+
+    setAvailableOptions(available);
+  };
+
+  // Update selected product when variants change
+  useEffect(() => {
+    if (
+      Object.keys(selectedVariants).length > 0 &&
+      validCombinations !== null
+    ) {
+      findMatchingProduct(selectedVariants);
+    }
+  }, [selectedVariants, validCombinations]);
 
   // Handler functions
   const handleVariantChange = (variantType: string, value: string) => {
-    setSelectedVariants((prev) => ({
-      ...prev,
-      [variantType]: value,
-    }));
+    const newSelections = { ...selectedVariants, [variantType]: value };
+    setSelectedVariants(newSelections);
+
+    // Update available options when user changes variant selection
+    if (validCombinations) {
+      updateAvailableOptions(newSelections, validCombinations);
+    }
   };
 
   const handleImageSelect = (index: number) => {
@@ -164,19 +245,47 @@ export function ProductDetailContent({
     });
   };
 
-  // Select random product from available products (simplified approach)
-  const selectRandomProduct = () => {
-    const availableProducts = products.filter(
-      (p) => p.isActive && !p.isDeleted && p.stock > 0
-    );
+  // Find exact product match by variant selections
+  const findMatchingProduct = async (selections: Record<string, string>) => {
+    // Check if all variant types are selected
+    if (
+      validCombinations &&
+      Object.keys(selections).length < validCombinations.variantTypes.length
+    ) {
+      setSelectedProduct(null);
+      return;
+    }
 
-    if (availableProducts.length > 0) {
-      const randomIndex = Math.floor(Math.random() * availableProducts.length);
-      setSelectedProduct(availableProducts[randomIndex]);
-    } else {
-      // If no products with stock, select first available product
-      const firstAvailable = products.find((p) => p.isActive && !p.isDeleted);
-      setSelectedProduct(firstAvailable || null);
+    try {
+      const response = await fetch(
+        `/api/products/${productGroup.id}/find-by-variants`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ variantSelections: selections }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to find matching product");
+      }
+
+      const data = await response.json();
+      const product = data.data;
+      setSelectedProduct(product);
+
+      // If product found, display correct price and stock
+      if (product) {
+        // Reset quantity if it exceeds available stock
+        if (quantity > product.stock) {
+          setQuantity(Math.max(1, product.stock));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to find matching product:", error);
+      setSelectedProduct(null);
     }
   };
 
@@ -199,14 +308,24 @@ export function ProductDetailContent({
       {} as Record<string, SelectProductVariant[]>
     );
 
-    // Convert to array format with availability info
+    // Convert to array format with availability info from availableOptions state
     return Object.entries(variantsByType).map(([type, variantList]) => ({
       type,
-      options: variantList.map((variant) => ({
-        type: variant.variant,
-        value: variant.value,
-        available: true, // For now, mark all as available (simplified approach)
-      })),
+      options: variantList.map((variant) => {
+        // Check if this option is in the availableOptions set for this variant type
+        const isAvailable = availableOptions[type]?.has(variant.value) ?? true;
+        const isDisabled = !isAvailable;
+
+        return {
+          type: variant.variant,
+          value: variant.value,
+          available: isAvailable,
+          disabled: isDisabled,
+          disabledReason: isDisabled
+            ? "Kombinasi varian ini tidak tersedia"
+            : undefined,
+        };
+      }),
     }));
   };
 

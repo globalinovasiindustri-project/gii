@@ -1,26 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { MainNavigation } from "@/components/common/main-navigation";
 import { productService } from "@/lib/services/product.service";
 import type { Metadata } from "next";
-import { ProductFilters as ProductFiltersComponent } from "@/components/shop/product-filters";
-import { ProductGrid } from "@/components/shop/product-grid";
-import { SortSelect } from "@/components/shop/sort-select";
-import { PaginationControls } from "@/components/shop/pagination-controls";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { SlidersHorizontal } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   parseShopParams,
   calculateActiveFilterCount,
   calculatePaginationIndices,
 } from "@/lib/utils/parse-shop-params";
+import { ShopLayout } from "./_components/shop-layout";
 
 // Apply Next.js revalidation
 export const revalidate = 60;
@@ -137,100 +123,30 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       priceRange
     );
 
+    // Prepare filter data for ShopLayout
+    const filterData = { categories, brands, priceRange };
+
+    // Prepare pagination data for ShopLayout
+    const pagination = {
+      page,
+      totalPages,
+      totalCount,
+      limit,
+    };
+
+    // Prepare display indices for ShopLayout
+    const displayIndices = { startIndex, endIndex };
+
     return (
-      <>
-        <div className="flex min-h-screen flex-col tracking-tight w-full">
-          <MainNavigation />
-          <main className="flex-col flex-1 p-4 md:p-8">
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Desktop Sidebar Filters - Hidden on mobile */}
-              <aside className="hidden lg:block w-64 flex-shrink-0">
-                <div className="sticky top-10">
-                  <ProductFiltersComponent
-                    data={{ categories, brands, priceRange }}
-                    currentFilters={currentFilters}
-                    mode="instant"
-                  />
-                </div>
-              </aside>
-
-              {/* Main Content */}
-              <div className="flex-1 min-w-0">
-                {/* Header with Mobile Filters and Sort */}
-                <div className="flex items-center justify-between gap-4 mb-6">
-                  {/* Mobile Filter Sheet - Hidden on desktop */}
-                  <div className="lg:hidden">
-                    <Sheet>
-                      <SheetTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <SlidersHorizontal className="h-4 w-4" />
-                          Filters
-                          {activeFilterCount > 0 && (
-                            <Badge
-                              variant="secondary"
-                              className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center"
-                            >
-                              {activeFilterCount}
-                            </Badge>
-                          )}
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent
-                        side="left"
-                        className="w-full sm:max-w-md overflow-y-auto"
-                      >
-                        <SheetHeader>
-                          <SheetTitle>Filters</SheetTitle>
-                          <SheetDescription>
-                            Refine your product search with filters
-                          </SheetDescription>
-                        </SheetHeader>
-                        <div className="py-6">
-                          <ProductFiltersComponent
-                            data={{ categories, brands, priceRange }}
-                            currentFilters={currentFilters}
-                            mode="deferred"
-                          />
-                        </div>
-                      </SheetContent>
-                    </Sheet>
-                  </div>
-
-                  {/* Sort Select */}
-                  <div className="ml-auto">
-                    <SortSelect currentSort={sortBy} />
-                  </div>
-                </div>
-
-                {/* Results Count */}
-                <div className="mb-6">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {totalCount > 0 ? startIndex + 1 : 0}-{endIndex} of{" "}
-                    {totalCount} products
-                  </p>
-                </div>
-
-                {/* Product Grid */}
-                <div className="mb-8">
-                  <ProductGrid products={products} />
-                </div>
-
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="mt-8">
-                    <PaginationControls
-                      currentPage={page}
-                      totalPages={totalPages}
-                      totalResults={totalCount}
-                      resultsPerPage={12}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </main>
-        </div>
-      </>
+      <ShopLayout
+        filterData={filterData}
+        currentFilters={currentFilters}
+        sortBy={sortBy}
+        products={products}
+        pagination={pagination}
+        displayIndices={displayIndices}
+        activeFilterCount={activeFilterCount}
+      />
     );
   } catch (error) {
     console.error("Error fetching products:", error);

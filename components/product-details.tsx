@@ -16,6 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Rating, RatingButton } from "./ui/shadcn-io/rating";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { SelectProduct } from "@/lib/db/schema";
 
@@ -23,6 +29,8 @@ interface VariantOption {
   type: string; // e.g., "Warna", "Kapasitas"
   value: string; // e.g., "Black", "256GB"
   available: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 interface ProductDetailsProps {
@@ -100,52 +108,98 @@ export function ProductDetails({
       )}
 
       {/* Variant Selection */}
-      {variantGroups.map((group) => (
-        <div key={group.type} className="space-y-2">
-          <p className="text-sm font-medium">
-            {group.type}:{" "}
-            <span className="font-normal">{selectedVariants[group.type]}</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {group.options.map((option) => (
-              <Button
-                key={option.value}
-                variant={
-                  selectedVariants[group.type] === option.value
-                    ? "default"
-                    : "outline"
-                }
-                className={cn(
-                  "min-w-[48px] rounded-md border border-gray-300 px-4 py-2 text-sm",
-                  selectedVariants[group.type] === option.value
-                    ? "bg-black text-white hover:bg-black"
-                    : "bg-white text-black hover:bg-gray-100",
-                  !option.available && "cursor-not-allowed opacity-50"
-                )}
-                onClick={() => onVariantChange(group.type, option.value)}
-                disabled={!option.available}
-              >
-                {option.value}
-              </Button>
-            ))}
-          </div>
-        </div>
-      ))}
+      <TooltipProvider>
+        {variantGroups.map((group) => {
+          const allOptionsUnavailable = group.options.every(
+            (option) => option.disabled || !option.available
+          );
+
+          return (
+            <div key={group.type} className="space-y-2">
+              <p className="text-sm font-medium">
+                {group.type}:{" "}
+                <span className="font-normal">
+                  {selectedVariants[group.type]}
+                </span>
+              </p>
+              {allOptionsUnavailable ? (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-sm text-amber-800">
+                    Tidak ada opsi {group.type.toLowerCase()} yang tersedia
+                    untuk kombinasi ini
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {group.options.map((option) => {
+                    const isDisabled = option.disabled || !option.available;
+                    const isSelected =
+                      selectedVariants[group.type] === option.value;
+
+                    const button = (
+                      <Button
+                        key={option.value}
+                        variant={isSelected ? "default" : "outline"}
+                        className={cn(
+                          "min-w-[48px] rounded-md border border-gray-300 px-4 py-2 text-sm",
+                          isSelected
+                            ? "bg-black text-white hover:bg-black"
+                            : "bg-white text-black hover:bg-gray-100",
+                          isDisabled && "cursor-not-allowed opacity-50"
+                        )}
+                        onClick={() =>
+                          onVariantChange(group.type, option.value)
+                        }
+                        disabled={isDisabled}
+                      >
+                        {option.value}
+                      </Button>
+                    );
+
+                    // Wrap disabled buttons with tooltip
+                    if (isDisabled && option.disabledReason) {
+                      return (
+                        <Tooltip key={option.value}>
+                          <TooltipTrigger asChild>{button}</TooltipTrigger>
+                          <TooltipContent>
+                            <p>{option.disabledReason}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
+                    return button;
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </TooltipProvider>
 
       {/* Stock Indicator */}
-      {stock <= 5 && stock > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-red-600">
-            Hurry, only {stock} items left in stock!
-          </p>
-          <Progress
-            value={stockPercentage}
-            className="h-2 w-full [&>*]:bg-red-600"
-          />
-        </div>
-      )}
-      {isOutOfStock && (
-        <p className="text-sm font-medium text-red-600">Out of stock!</p>
+      {selectedProduct && (
+        <>
+          {stock <= 5 && stock > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-red-600">
+                Hurry, only {stock} items left in stock!
+              </p>
+              <Progress
+                value={stockPercentage}
+                className="h-2 w-full [&>*]:bg-red-600"
+              />
+            </div>
+          )}
+          {isOutOfStock && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3">
+              <p className="text-sm font-medium text-red-600">
+                Stok habis - Produk tidak tersedia
+              </p>
+            </div>
+          )}
+          {stock > 5 && <p className="text-sm text-green-600">Stok tersedia</p>}
+        </>
       )}
 
       {/* Share Icons */}

@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { OrderFilters } from "./_components/order-filters";
-import { OrderTable } from "./_components/order-table";
+import { OrderGrid } from "./_components/order-grid";
 import { OrderSheet } from "./_components/order-sheet";
 import {
-  useOrders,
+  useInfiniteOrders,
+  useUpdateOrderStatus,
+  useUpdateAdminNotes,
   CompleteOrder,
   OrderFilters as OrderFiltersType,
 } from "@/hooks/use-orders";
+import type { UpdateOrderStatusSchema } from "@/lib/validations/order.validation";
+
+const PAGE_SIZE = 20;
 
 export default function OrdersPage() {
   // State management for filters
@@ -16,8 +21,6 @@ export default function OrdersPage() {
     search: "",
     orderStatus: "all",
     paymentStatus: "all",
-    page: 1,
-    pageSize: 10,
   });
 
   // State management for selected order and sheet
@@ -26,24 +29,45 @@ export default function OrdersPage() {
   );
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  // Fetch orders using TanStack Query hook
-  const { data: ordersData, isLoading, error } = useOrders(filters);
+  // Fetch orders using infinite query
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteOrders(filters, PAGE_SIZE);
+
+  // Mutation hooks for status and notes updates
+  const updateStatusMutation = useUpdateOrderStatus();
+  const updateNotesMutation = useUpdateAdminNotes();
+
+  // Flatten pages into single array
+  const orders = data?.pages.flatMap((page) => page.data) ?? [];
 
   // Filter change handlers
   const handleSearchChange = (value: string) => {
-    setFilters((prev) => ({ ...prev, search: value, page: 1 }));
+    setFilters((prev) => ({ ...prev, search: value }));
   };
 
   const handleOrderStatusFilterChange = (value: string) => {
-    setFilters((prev) => ({ ...prev, orderStatus: value, page: 1 }));
+    setFilters((prev) => ({ ...prev, orderStatus: value }));
   };
 
   const handlePaymentStatusFilterChange = (value: string) => {
-    setFilters((prev) => ({ ...prev, paymentStatus: value, page: 1 }));
+    setFilters((prev) => ({ ...prev, paymentStatus: value }));
   };
 
-  // Row click handler - opens sheet with selected order
-  const handleRowClick = (order: CompleteOrder) => {
+  // Load more handler
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  // Card click handler - opens sheet with selected order
+  const handleCardClick = (order: CompleteOrder) => {
     setSelectedOrder(order);
     setIsSheetOpen(true);
   };
@@ -54,18 +78,43 @@ export default function OrdersPage() {
     setSelectedOrder(null);
   };
 
+  // Status update handler
+  const handleStatusUpdate = (data: UpdateOrderStatusSchema) => {
+    if (!selectedOrder) return;
+    updateStatusMutation.mutate(
+      { id: selectedOrder.order.id, data },
+      {
+        onSuccess: (response) => {
+          // Update the selected order with new data
+          if (response.data) {
+            setSelectedOrder(response.data);
+          }
+        },
+      }
+    );
+  };
+
+  // Admin notes update handler
+  const handleAdminNotesUpdate = (notes: string) => {
+    if (!selectedOrder) return;
+    updateNotesMutation.mutate(
+      { id: selectedOrder.order.id, adminNotes: notes },
+      {
+        onSuccess: (response) => {
+          // Update the selected order with new data
+          if (response.data) {
+            setSelectedOrder(response.data);
+          }
+        },
+      }
+    );
+  };
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-medium tracking-tight">Order</h1>
-        {/* <Button
-          size={"sm"}
-          onClick={handleAddUser}
-          className="rounded-full size-8"
-        >
-          <Plus className="size-6" />
-        </Button> */}
       </div>
 
       {/* Error State */}
@@ -87,11 +136,14 @@ export default function OrdersPage() {
         onPaymentStatusFilterChange={handlePaymentStatusFilterChange}
       />
 
-      {/* Order Table */}
-      <OrderTable
-        orders={ordersData?.data || []}
+      {/* Order Grid */}
+      <OrderGrid
+        orders={orders}
         isLoading={isLoading}
-        onRowClick={handleRowClick}
+        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={hasNextPage ?? false}
+        onLoadMore={handleLoadMore}
+        onCardClick={handleCardClick}
       />
 
       {/* Order Sheet */}
@@ -99,6 +151,10 @@ export default function OrdersPage() {
         isOpen={isSheetOpen}
         onClose={handleCloseSheet}
         selectedOrder={selectedOrder}
+        onStatusUpdate={handleStatusUpdate}
+        isUpdatingStatus={updateStatusMutation.isPending}
+        onAdminNotesUpdate={handleAdminNotesUpdate}
+        isUpdatingNotes={updateNotesMutation.isPending}
       />
     </div>
   );

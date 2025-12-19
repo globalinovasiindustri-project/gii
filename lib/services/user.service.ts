@@ -95,6 +95,23 @@ export const userService = {
     return result[0] || null;
   },
 
+  // Update user profile (name and phone only)
+  updateProfile: async (
+    id: string,
+    data: { name?: string; phone?: string | null }
+  ): Promise<SelectUser | null> => {
+    const result = await db
+      .update(users)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(users.id, id), eq(users.isDeleted, false)))
+      .returning();
+
+    return result[0] || null;
+  },
+
   // Soft delete user
   deleteUser: async (id: string): Promise<boolean> => {
     try {

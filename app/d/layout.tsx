@@ -1,18 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function DashboardLayout({
   children,
@@ -20,11 +7,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-sidebar-accent/50">
+    <div className="dark">
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <div className="flex flex-1 flex-col gap-4 p-8 pt-0 ">{children}</div>
+          <div className="flex flex-1 flex-col gap-4 p-8 pt-0">{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </div>

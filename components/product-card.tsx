@@ -1,5 +1,7 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link"; // Import Link
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -24,8 +26,12 @@ export function ProductCard({
   className,
   slug,
 }: ProductCardProps) {
+  const handleClick = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <Link href={`/product/${slug}`} className="block">
+    <Link href={`/product/${slug}`} onClick={handleClick} className="block">
       <Card
         className={cn(
           "overflow-hidden rounded-2xl shadow-sm border-none bg-muted/80 max-w-[320px]",

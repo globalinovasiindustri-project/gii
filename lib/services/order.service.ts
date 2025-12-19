@@ -18,7 +18,8 @@ import {
   generateSecurePassword,
 } from "../utils/order.utils";
 import type { CartItem } from "../types/cart.types";
-import { ValidationError } from "../errors";
+import { ValidationError, NotFoundError } from "../errors";
+import type { UpdateOrderStatusSchema } from "../validations/order.validation";
 
 type WhereCondition = SQL<unknown> | undefined;
 
@@ -498,5 +499,135 @@ export const orderService = {
         orderNumber: order.orderNumber,
       };
     });
+  },
+
+  /**
+   * Update order status with timestamp management
+   * Handles status transitions and clears/sets timestamps appropriately:
+   * - pending: clears all progression timestamps (shippedAt, deliveredAt, cancelledAt)
+   * - shipped: sets shippedAt, clears deliveredAt and cancelledAt
+   * - delivered: sets deliveredAt, clears cancelledAt
+   * - cancelled: sets cancelledAt
+   */
+  async updateStatus(
+    orderId: string,
+    data: UpdateOrderStatusSchema
+  ): Promise<CompleteOrder> {
+    // Verify order exists
+    const [existingOrder] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!existingOrder) {
+      throw new NotFoundError("Order tidak ditemukan");
+    }
+
+    const now = new Date();
+
+    // Build update object based on new status
+    type OrderUpdate = {
+      orderStatus: string;
+      updatedAt: Date;
+      shippedAt?: Date | null;
+      deliveredAt?: Date | null;
+      cancelledAt?: Date | null;
+      cancellationReason?: string | null;
+      trackingNumber?: string | null;
+      carrier?: string | null;
+    };
+
+    const updateData: OrderUpdate = {
+      orderStatus: data.orderStatus,
+      updatedAt: now,
+    };
+
+    // Handle timestamp logic based on status transition
+    switch (data.orderStatus) {
+      case "pending":
+        // Clear all progression timestamps when rolling back to pending
+        updateData.shippedAt = null;
+        updateData.deliveredAt = null;
+        updateData.cancelledAt = null;
+        updateData.cancellationReason = null;
+        break;
+
+      case "shipped":
+        // Set shippedAt, clear deliveredAt and cancelledAt
+        updateData.shippedAt = now;
+        updateData.deliveredAt = null;
+        updateData.cancelledAt = null;
+        updateData.cancellationReason = null;
+        // Store optional tracking info
+        if (data.trackingNumber !== undefined) {
+          updateData.trackingNumber = data.trackingNumber || null;
+        }
+        if (data.carrier !== undefined) {
+          updateData.carrier = data.carrier || null;
+        }
+        break;
+
+      case "delivered":
+        // Set deliveredAt, clear cancelledAt
+        updateData.deliveredAt = now;
+        updateData.cancelledAt = null;
+        updateData.cancellationReason = null;
+        break;
+
+      case "cancelled":
+        // Set cancelledAt and optional reason
+        updateData.cancelledAt = now;
+        if (data.cancellationReason !== undefined) {
+          updateData.cancellationReason = data.cancellationReason || null;
+        }
+        break;
+    }
+
+    // Execute update
+    await db.update(orders).set(updateData).where(eq(orders.id, orderId));
+
+    // Fetch complete order with items to return consistent data structure
+    const completeOrder = await this.getOrderById(orderId, "admin");
+    if (!completeOrder) {
+      throw new NotFoundError("Order tidak ditemukan setelah update");
+    }
+
+    return completeOrder;
+  },
+
+  /**
+   * Update admin notes for an order
+   */
+  async updateAdminNotes(
+    orderId: string,
+    adminNotes: string
+  ): Promise<CompleteOrder> {
+    // Verify order exists
+    const [existingOrder] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!existingOrder) {
+      throw new NotFoundError("Order tidak ditemukan");
+    }
+
+    await db
+      .update(orders)
+      .set({
+        adminNotes,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, orderId));
+
+    // Fetch complete order with items to return consistent data structure
+    const completeOrder = await this.getOrderById(orderId, "admin");
+    if (!completeOrder) {
+      throw new NotFoundError("Order tidak ditemukan setelah update");
+    }
+
+    return completeOrder;
   },
 };

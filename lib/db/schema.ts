@@ -1,5 +1,4 @@
 import {
-  pgEnum,
   integer,
   pgTable,
   text,
@@ -11,23 +10,21 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-// Role options
-const roleEnum = pgEnum("role", ["user", "admin", "super_admin"]);
-
+// Role options (using text field with TypeScript constants for type safety)
 export const roleOptions = {
   USER: "user",
   ADMIN: "admin",
   SUPER_ADMIN: "super_admin",
 } as const;
 
+export type Role = (typeof roleOptions)[keyof typeof roleOptions];
+
 // Order status options
 export const orderStatusOptions = {
   PENDING: "pending",
-  PROCESSING: "processing",
   SHIPPED: "shipped",
   DELIVERED: "delivered",
   CANCELLED: "cancelled",
-  REFUNDED: "refunded",
 } as const;
 
 // Payment status options
@@ -44,7 +41,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   avatar: text("avatar"),
   email: text("email").notNull().unique(),
-  role: roleEnum("role").notNull().default(roleOptions.USER),
+  role: text("role").notNull().default(roleOptions.USER),
   isConfirmed: boolean("is_confirmed").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
   isDeleted: boolean("is_deleted").notNull().default(false),
@@ -315,6 +312,10 @@ export const orders = pgTable(
     paidAt: timestamp("paid_at"),
     shippedAt: timestamp("shipped_at"),
     deliveredAt: timestamp("delivered_at"),
+    cancelledAt: timestamp("cancelled_at"),
+
+    // Cancellation details
+    cancellationReason: text("cancellation_reason"),
   },
   (table) => ({
     orderNumberIdx: index("order_number_idx").on(table.orderNumber),

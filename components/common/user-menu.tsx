@@ -78,37 +78,30 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="User Account"
-          className="relative"
-        >
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.avatar || ""} alt={user?.name || ""} />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-        </Button>
+        <Avatar className="h-8 w-8 cursor-pointer">
+          <AvatarImage src={user?.avatar || ""} alt={user?.name || ""} />
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user?.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="font-semibold">{user?.name}</p>
+            <p className="font-normal text-sm text-muted-foreground">
               {user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/myorder" className="cursor-pointer">
-            <Package className="mr-2 h-4 w-4" />
+          <Link href="/user/orders" className="cursor-pointer">
+            <Package className="h-4 w-4" />
             Pesanan Saya
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" />
+          <Link href="/user/profile" className="cursor-pointer">
+            <Settings className="h-4 w-4" />
             Pengaturan
           </Link>
         </DropdownMenuItem>
@@ -118,8 +111,8 @@ export function UserMenu() {
           disabled={isLoggingOut}
           className="cursor-pointer"
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          {isLoggingOut ? "Keluar..." : "Keluar"}
+          <LogOut className="h-4 w-4" />
+          {isLoggingOut ? "Log out..." : "Log out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

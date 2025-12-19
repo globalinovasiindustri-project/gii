@@ -24,6 +24,7 @@ import { CompleteProduct, ProductFilters } from "@/hooks/use-products";
 import { UserRole } from "../enums";
 import { hasPermission } from "../utils/permissions";
 import { generateSlug } from "../utils/product.utils";
+import type { ValidVariantCombinations } from "../types/product.types";
 
 type WhereCondition = SQL<unknown> | undefined;
 type VariantSelection = Record<string, string>;
@@ -1098,5 +1099,238 @@ export const productService = {
       );
 
     return result[0] || { min: 0, max: 0 };
+  },
+
+  /**
+   * Get all valid variant combinations for a product group
+   * Returns structured data with variant types, combinations, and availability map
+   */
+  async getValidVariantCombinations(productGroupId: string): Promise<{
+    variantTypes: string[];
+    combinations: Array<{
+      productId: string;
+      variants: Record<string, string>;
+      price: number;
+      stock: number;
+      isActive: boolean;
+    }>;
+    availabilityMap: Record<string, Record<string, boolean>>;
+  }> {
+    // Step 1: Get all active products for this product group
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(
+        and(
+          eq(products.productGroupId, productGroupId),
+          eq(products.isActive, true),
+          eq(products.isDeleted, false)
+        )
+      );
+
+    // If no products, return empty structure
+    if (productsList.length === 0) {
+      return {
+        variantTypes: [],
+        combinations: [],
+        availabilityMap: {},
+      };
+    }
+
+    // Step 2: Get all variant combinations for these products
+    const productIds = productsList.map((p) => p.id);
+    const combinations = await db
+      .select()
+      .from(productVariantCombinations)
+      .where(inArray(productVariantCombinations.productId, productIds));
+
+    // If no combinations, this is a product without variants
+    if (combinations.length === 0) {
+      return {
+        variantTypes: [],
+        combinations: productsList.map((p) => ({
+          productId: p.id,
+          variants: {},
+          price: p.price,
+          stock: p.stock,
+          isActive: p.isActive,
+        })),
+        availabilityMap: {},
+      };
+    }
+
+    // Step 3: Get variant details
+    const variantIds = combinations.map((c) => c.variantId);
+    const variants = await db
+      .select()
+      .from(productVariants)
+      .where(inArray(productVariants.id, variantIds));
+
+    // Step 4: Build variant selections map (productId -> variants)
+    const variantsMap = new Map(variants.map((v) => [v.id, v]));
+    const variantSelectionsByProduct = new Map<
+      string,
+      Record<string, string>
+    >();
+
+    for (const combo of combinations) {
+      const variant = variantsMap.get(combo.variantId);
+      if (!variant) continue;
+
+      const selections = variantSelectionsByProduct.get(combo.productId) ?? {};
+      selections[variant.variant] = variant.value;
+      variantSelectionsByProduct.set(combo.productId, selections);
+    }
+
+    // Step 5: Build structured response
+    const variantTypesSet = new Set<string>();
+    const combinationsResult = productsList.map((product) => {
+      const variantSelections =
+        variantSelectionsByProduct.get(product.id) ?? {};
+
+      // Track variant types
+      Object.keys(variantSelections).forEach((type) =>
+        variantTypesSet.add(type)
+      );
+
+      return {
+        productId: product.id,
+        variants: variantSelections,
+        price: product.price,
+        stock: product.stock,
+        isActive: product.isActive,
+      };
+    });
+
+    const variantTypes = Array.from(variantTypesSet).sort();
+
+    // Step 6: Build availability map
+    // For each variant type, track which values are available (have stock > 0)
+    const availabilityMap: Record<string, Record<string, boolean>> = {};
+
+    for (const variantType of variantTypes) {
+      availabilityMap[variantType] = {};
+
+      for (const combo of combinationsResult) {
+        const value = combo.variants[variantType];
+        if (value) {
+          // Mark as available if at least one combination with this value has stock
+          if (combo.stock > 0) {
+            availabilityMap[variantType][value] = true;
+          } else if (availabilityMap[variantType][value] === undefined) {
+            // Only set to false if not already set to true
+            availabilityMap[variantType][value] = false;
+          }
+        }
+      }
+    }
+
+    return {
+      variantTypes,
+      combinations: combinationsResult,
+      availabilityMap,
+    };
+  },
+
+  /**
+   * Find exact product by product group ID and variant selections
+   * Returns product with stock and active status, or null if no match
+   */
+  async findProductByVariants(
+    productGroupId: string,
+    variantSelections: Record<string, string>
+  ): Promise<SelectProduct | null> {
+    // Handle edge case: empty variant selections
+    if (Object.keys(variantSelections).length === 0) {
+      // Try to find a product without variants
+      const productsList = await db
+        .select()
+        .from(products)
+        .where(
+          and(
+            eq(products.productGroupId, productGroupId),
+            eq(products.isActive, true),
+            eq(products.isDeleted, false)
+          )
+        )
+        .limit(1);
+
+      return productsList[0] ?? null;
+    }
+
+    // Step 1: Get all active products for this product group
+    const productsList = await db
+      .select()
+      .from(products)
+      .where(
+        and(
+          eq(products.productGroupId, productGroupId),
+          eq(products.isActive, true),
+          eq(products.isDeleted, false)
+        )
+      );
+
+    if (productsList.length === 0) {
+      return null;
+    }
+
+    // Step 2: Get all variant combinations for these products
+    const productIds = productsList.map((p) => p.id);
+    const combinations = await db
+      .select()
+      .from(productVariantCombinations)
+      .where(inArray(productVariantCombinations.productId, productIds));
+
+    if (combinations.length === 0) {
+      return null;
+    }
+
+    // Step 3: Get variant details
+    const variantIds = combinations.map((c) => c.variantId);
+    const variants = await db
+      .select()
+      .from(productVariants)
+      .where(inArray(productVariants.id, variantIds));
+
+    // Step 4: Build variant selections map for each product
+    const variantsMap = new Map(variants.map((v) => [v.id, v]));
+    const variantSelectionsByProduct = new Map<
+      string,
+      Record<string, string>
+    >();
+
+    for (const combo of combinations) {
+      const variant = variantsMap.get(combo.variantId);
+      if (!variant) continue;
+
+      const selections = variantSelectionsByProduct.get(combo.productId) ?? {};
+      selections[variant.variant] = variant.value;
+      variantSelectionsByProduct.set(combo.productId, selections);
+    }
+
+    // Step 5: Find exact match
+    for (const product of productsList) {
+      const productVariants = variantSelectionsByProduct.get(product.id) ?? {};
+
+      // Check if this product's variants match the requested selections exactly
+      const variantKeys = Object.keys(variantSelections);
+      const productVariantKeys = Object.keys(productVariants);
+
+      // Must have same number of variant types
+      if (variantKeys.length !== productVariantKeys.length) {
+        continue;
+      }
+
+      // Check if all variant selections match
+      const isMatch = variantKeys.every(
+        (key) => productVariants[key] === variantSelections[key]
+      );
+
+      if (isMatch) {
+        return product;
+      }
+    }
+
+    return null;
   },
 };

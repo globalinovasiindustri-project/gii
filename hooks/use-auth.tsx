@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   RegisterFormInput,
   LoginFormInput,
+  ProfileFormSchema,
 } from "@/lib/validations/auth.validation";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -40,6 +41,12 @@ interface VerifyResponse {
 }
 
 interface CurrentUserResponse {
+  success: boolean;
+  message: string;
+  data: InferSelectModel<typeof users> | null;
+}
+
+interface UpdateProfileResponse {
   success: boolean;
   message: string;
   data: InferSelectModel<typeof users> | null;
@@ -132,6 +139,28 @@ const authApi = {
       const errorData = await response.json();
       throw new Error(
         errorData.message || "Terjadi kesalahan saat mengambil data pengguna"
+      );
+    }
+
+    return response.json();
+  },
+
+  updateProfile: async (
+    data: ProfileFormSchema
+  ): Promise<UpdateProfileResponse> => {
+    const response = await fetch("/api/auth/me", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.message || "Terjadi kesalahan saat memperbarui profil"
       );
     }
 
@@ -237,6 +266,25 @@ export const useMe = () => {
   return {
     ...mutation,
   };
+};
+
+// Hook for updating user profile (Requirement 4.3, 4.4, 4.6, 4.7)
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: ProfileFormSchema) => authApi.updateProfile(data),
+    onSuccess: (data) => {
+      // Invalidate and refetch user data
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      // Show success toast (Requirement 4.6)
+      toast.success(data.message);
+    },
+    onError: (error) => {
+      // Show error toast (Requirement 4.7)
+      toast.error(error.message);
+    },
+  });
 };
 
 export const useAuth = () => {

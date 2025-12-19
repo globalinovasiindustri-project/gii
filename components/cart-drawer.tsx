@@ -96,8 +96,9 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         <SheetHeader className="border-b px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShoppingBag className="size-5" />
-              <span className="text-xl font-semibold">Keranjang Belanja</span>
+              <span className="text-xl font-medium tracking-tight">
+                Keranjang Belanja
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -159,12 +160,14 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <div className="border-t p-4 md:p-6 bg-white">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex flex-col">
-                    <div className="text-sm text-gray-600">Subtotal</div>
+                    <div className="text-sm font-medium">Subtotal</div>
                     <p className="text-xs text-muted-foreground">
                       Ongkos kirim dihitung saat checkout
                     </p>
                   </div>
-                  <div className="text-xl font-bold">Rp{formattedSubtotal}</div>
+                  <div className="text-xl font-medium tracking-tight">
+                    Rp{formattedSubtotal}
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-3">

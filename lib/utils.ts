@@ -70,14 +70,15 @@ export function getStatusVariant(
     string,
     "default" | "secondary" | "destructive" | "warning" | "outline"
   > = {
+    // Order status
     pending: "warning",
-    processing: "secondary",
-    shipped: "default",
+    shipped: "secondary",
     delivered: "default",
     cancelled: "destructive",
-    refunded: "destructive",
+    // Payment status
     paid: "default",
     failed: "destructive",
+    refunded: "outline",
   };
 
   return statusMap[status] || "outline";

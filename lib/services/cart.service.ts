@@ -4,6 +4,7 @@ import { carts, cartItems, products, productGroups } from "@/lib/db/schema";
 import { CartItem, ProductData } from "@/lib/types/cart.types";
 import { DatabaseError, NotFoundError, ValidationError } from "@/lib/errors";
 import { isUserId } from "@/lib/utils/identifier.utils";
+import { productService } from "@/lib/services/product.service";
 
 /**
  * Validation result for a cart item
@@ -219,6 +220,41 @@ export const cartService = {
 
       if (productData.length === 0 || !productData[0].isActive) {
         throw new ValidationError("Product not found or unavailable");
+      }
+
+      // NEW: Validate variant combination if variant selections exist
+      if (
+        product.variantSelections &&
+        Object.keys(product.variantSelections).length > 0
+      ) {
+        const matchingProduct = await productService.findProductByVariants(
+          product.productGroupId,
+          product.variantSelections
+        );
+
+        if (!matchingProduct) {
+          throw new ValidationError(
+            "Invalid variant combination. This product configuration is not available."
+          );
+        }
+
+        if (matchingProduct.id !== product.productId) {
+          throw new ValidationError(
+            "Product ID does not match variant selections."
+          );
+        }
+
+        if (!matchingProduct.isActive || matchingProduct.isDeleted) {
+          throw new ValidationError(
+            "This product configuration is no longer available."
+          );
+        }
+
+        if (matchingProduct.stock < quantity) {
+          throw new ValidationError(
+            `Insufficient stock. Only ${matchingProduct.stock} available for this configuration.`
+          );
+        }
       }
 
       // Check stock
@@ -495,7 +531,7 @@ export const cartService = {
 
   /**
    * Validate cart items against current product data
-   * Checks availability, stock, and price changes
+   * Checks availability, stock, price changes, and variant combinations
    * @param items - Cart items to validate
    * @returns Validation result with errors
    */
@@ -524,6 +560,39 @@ export const cartService = {
         }
 
         const currentProduct = productData[0];
+
+        // NEW: Validate variant combination if variant selections exist
+        if (
+          item.variantSelections &&
+          Object.keys(item.variantSelections).length > 0
+        ) {
+          const matchingProduct = await productService.findProductByVariants(
+            item.productGroupId,
+            item.variantSelections
+          );
+
+          if (!matchingProduct) {
+            errors.push({
+              itemId: item.id,
+              valid: false,
+              type: "PRODUCT_UNAVAILABLE",
+              message: `${item.name} variant combination is no longer available`,
+              suggestedAction: "REMOVE",
+            });
+            continue;
+          }
+
+          if (matchingProduct.id !== item.productId) {
+            errors.push({
+              itemId: item.id,
+              valid: false,
+              type: "PRODUCT_UNAVAILABLE",
+              message: `${item.name} variant selections do not match product`,
+              suggestedAction: "REMOVE",
+            });
+            continue;
+          }
+        }
 
         // Check stock
         if (currentProduct.stock < item.quantity) {
