@@ -20,6 +20,7 @@ import {
 import type { CartItem } from "../types/cart.types";
 import { ValidationError, NotFoundError } from "../errors";
 import type { UpdateOrderStatusSchema } from "../validations/order.validation";
+import { addressService } from "./address.service";
 
 type WhereCondition = SQL<unknown> | undefined;
 
@@ -56,6 +57,17 @@ export interface CreateOrderInput {
   province: string;
   postalCode: string;
 
+  // wilayah.id location codes for address persistence
+  provinceCode?: string;
+  regencyCode?: string;
+  districtCode?: string;
+  villageCode?: string;
+
+  // Shipping selection
+  selectedCourier?: string;
+  selectedService?: string;
+  shippingCost?: number;
+
   // Cart items (passed from cart service)
   cartItems: CartItem[];
 
@@ -76,6 +88,10 @@ export interface CreateAuthenticatedOrderInput {
   userId: string;
   addressId: string;
   cartItems: CartItem[];
+  // Shipping selection
+  selectedCourier?: string;
+  selectedService?: string;
+  shippingCost?: number;
 }
 
 export interface CreateAuthenticatedOrderResult {
@@ -274,12 +290,14 @@ export const orderService = {
    * This method handles the complete guest checkout flow:
    * 1. Checks for duplicate email
    * 2. Creates user account with generated password
-   * 3. Creates order with auto-paid status
-   * 4. Creates order items from cart
-   * 5. Clears cart after successful order
+   * 3. Saves shipping address to user's address list (non-blocking)
+   * 4. Creates order with auto-paid status
+   * 5. Creates order items from cart
+   * 6. Clears cart after successful order
    */
   async createGuestOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
-    return await db.transaction(async (tx) => {
+    // Execute order creation in transaction
+    const orderResult = await db.transaction(async (tx) => {
       // 1. Check if email already exists before creating order
       const existingUser = await tx
         .select()
@@ -312,7 +330,8 @@ export const orderService = {
         (sum, item) => sum + item.price * item.quantity,
         0
       );
-      const shippingCost = 15000; // Fixed shipping cost in IDR
+      // Use provided shipping cost or default to 15000
+      const shippingCost = input.shippingCost ?? 15000;
       const total = subtotal + shippingCost;
 
       // 5. Create order record with the newly created userId
@@ -332,6 +351,11 @@ export const orderService = {
             city: input.city,
             province: input.province,
             postalCode: input.postalCode,
+            // Include location codes in shipping address JSON for reference
+            provinceCode: input.provinceCode,
+            regencyCode: input.regencyCode,
+            districtCode: input.districtCode,
+            villageCode: input.villageCode,
           }),
           billingAddress: JSON.stringify({
             addressLabel: input.addressLabel,
@@ -350,6 +374,10 @@ export const orderService = {
           paymentStatus: "paid", // Auto-paid for MVP
           currency: "IDR",
           customerNotes: input.notes,
+          // Store shipping selection details
+          carrier: input.selectedCourier
+            ? `${input.selectedCourier}${input.selectedService ? ` - ${input.selectedService}` : ""}`
+            : null,
         })
         .returning();
 
@@ -384,6 +412,30 @@ export const orderService = {
         userId: newUser.id,
       };
     });
+
+    // 8. Save address to user's address list (non-blocking)
+    // Done outside transaction to ensure order succeeds even if address save fails
+    try {
+      await addressService.createAddressFromCheckout({
+        userId: orderResult.userId,
+        addressLabel: input.addressLabel,
+        streetAddress: input.fullAddress,
+        village: input.village,
+        district: input.district,
+        city: input.city,
+        state: input.province,
+        postalCode: input.postalCode,
+        provinceCode: input.provinceCode,
+        regencyCode: input.regencyCode,
+        districtCode: input.districtCode,
+        villageCode: input.villageCode,
+      });
+    } catch (error) {
+      // Log error but don't fail the order
+      console.error("Failed to save guest checkout address:", error);
+    }
+
+    return orderResult;
   },
 
   /**
@@ -434,7 +486,8 @@ export const orderService = {
         (sum, item) => sum + item.price * item.quantity,
         0
       );
-      const shippingCost = 15000; // Fixed shipping cost in IDR
+      // Use provided shipping cost or default to 15000
+      const shippingCost = input.shippingCost ?? 15000;
       const total = subtotal + shippingCost;
 
       // 5. Prepare address JSON snapshot
@@ -448,6 +501,11 @@ export const orderService = {
         state: address.state,
         postalCode: address.postalCode,
         country: address.country,
+        // Include location codes for reference
+        provinceCode: address.provinceCode,
+        regencyCode: address.regencyCode,
+        districtCode: address.districtCode,
+        villageCode: address.villageCode,
       };
 
       // 6. Create order record
@@ -466,6 +524,10 @@ export const orderService = {
           orderStatus: "pending",
           paymentStatus: "paid", // Auto-paid for MVP
           currency: "IDR",
+          // Store shipping selection details
+          carrier: input.selectedCourier
+            ? `${input.selectedCourier}${input.selectedService ? ` - ${input.selectedService}` : ""}`
+            : null,
         })
         .returning();
 

@@ -16,23 +16,20 @@ export function BundleSection() {
     <section className="w-full px-4 md:px-8">
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Left Column: Background Image with Text Overlay */}
-        <div className="h-[400px] overflow-hidden rounded-xl lg:h-[600px] hidden relative md:flex">
+        <div className="h-[400px] overflow-hidden rounded-xl lg:h-[480px] hidden relative md:flex">
           <Image
-            src="/placeholder.svg?height=700&width=700"
+            src="/bulk-order.webp?height=512&width=512"
             alt="Till Death Drips Hot Bundle Background"
             fill
             className="object-cover object-center"
             priority
           />
-          <div className="absolute inset-0 rounded-xl bg-black/40" />
-          <div className="relative z-10 flex h-full flex-col justify-end p-8 text-white md:p-12">
+          <div className="absolute inset-0 rounded-xl bg-black/60" />
+          <div className="relative z-10 flex h-full flex-col justify-end p-6 text-white md:p-8">
             <h2 className="mb-4 text-3xl font-medium tracking-tighter leading-tight md:text-4xl">
               Beli dalam jumlah yang banyak, untuk harga yang murah.
             </h2>
-            <p className="mb-6 text-lg font-medium">
-              Untuk harga yang lebih murah
-            </p>
-            <p className="text-base leading-relaxed text-gray-200">
+            <p className="text-lg leading-relaxed text-gray-200">
               Dapatkan penawaran khusus untuk pembelian skala besar, yang
               memenuhi beragam kebutuhan.
             </p>

@@ -17,7 +17,7 @@ export function OrderSummary({
   isAuthenticated = false,
 }: OrderSummaryProps) {
   return (
-    <div className="bg-white border rounded-lg p-4 md:p-6 lg:top-4 fixed bottom-0 left-0 right-0 lg:rel z-10 lg:z-auto shadow-lg lg:shadow-none border-t-2 lg:border-t transition-all duration-300">
+    <div className="bg-white border rounded-lg p-4 md:p-6 lg:sticky lg:top-4 fixed bottom-0 left-0 right-0 z-10 lg:z-auto shadow-lg lg:shadow-none border-t-2 lg:border-t transition-all duration-300">
       <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 hidden lg:block">
         Ringkasan Belanja
       </h2>

@@ -105,6 +105,7 @@ export const cartService = {
           stock: item.product.stock,
           thumbnailUrl,
           variantSelections,
+          weight: item.productGroup.weight ?? 1000, // Default 1kg if not specified
           addedAt: item.cartItem.createdAt.getTime(),
           updatedAt: item.cartItem.updatedAt.getTime(),
         };
@@ -182,6 +183,7 @@ export const cartService = {
           stock: item.product.stock,
           thumbnailUrl,
           variantSelections,
+          weight: item.productGroup.weight ?? 1000, // Default 1kg if not specified
           addedAt: item.cartItem.createdAt.getTime(),
           updatedAt: item.cartItem.updatedAt.getTime(),
         };

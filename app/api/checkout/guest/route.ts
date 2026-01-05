@@ -3,32 +3,37 @@ import { orderService } from "@/lib/services/order.service";
 import { cartService } from "@/lib/services/cart.service";
 import { getSessionId } from "@/lib/utils/session.utils";
 import { formatErrorResponse, ValidationError } from "@/lib/errors";
+import { guestCheckoutWithShippingSchema } from "@/lib/validations/checkout.validation";
 import jwt from "jsonwebtoken";
-
-/**
- * Request body interface for checkout
- */
-interface CheckoutRequest {
-  fullName: string;
-  email: string;
-  phone: string;
-  addressLabel: string;
-  fullAddress: string;
-  village: string;
-  district: string;
-  city: string;
-  province: string;
-  postalCode: string;
-}
 
 /**
  * POST /api/checkout/guest
  * Process guest checkout: validate cart, create order, auto-register user, set auth cookie
+ *
+ * Request body:
+ * - fullName: Customer full name
+ * - email: Customer email
+ * - phone: Customer phone number
+ * - addressLabel: Address type (Rumah, Kantor, etc.)
+ * - fullAddress: Street address
+ * - village: Kelurahan
+ * - district: Kecamatan
+ * - city: City name
+ * - province: Province name
+ * - postalCode: 5-digit postal code
+ * - provinceCode?: wilayah.id province code (optional)
+ * - regencyCode?: wilayah.id regency code (optional)
+ * - districtCode?: wilayah.id district code (optional)
+ * - villageCode?: wilayah.id village code (optional)
+ * - selectedCourier?: Selected courier name (optional)
+ * - selectedService?: Selected service type (optional)
+ * - shippingCost?: Calculated shipping cost (optional)
  */
 export async function POST(request: NextRequest) {
   try {
-    // Parse request body
-    const body: CheckoutRequest = await request.json();
+    // Parse and validate request body
+    const body = await request.json();
+    const validated = guestCheckoutWithShippingSchema.parse(body);
 
     // Validate session ID exists
     const sessionId = getSessionId(request);
@@ -71,18 +76,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call order service to create order
+    // Call order service to create order with shipping and location data
     const result = await orderService.createGuestOrder({
-      customerEmail: body.email,
-      customerName: body.fullName,
-      customerPhone: body.phone,
-      addressLabel: body.addressLabel,
-      fullAddress: body.fullAddress,
-      village: body.village,
-      district: body.district,
-      city: body.city,
-      province: body.province,
-      postalCode: body.postalCode,
+      customerEmail: validated.email,
+      customerName: validated.fullName,
+      customerPhone: validated.phone,
+      addressLabel: validated.addressLabel,
+      fullAddress: validated.fullAddress,
+      village: validated.village,
+      district: validated.district,
+      city: validated.city,
+      province: validated.province,
+      postalCode: validated.postalCode,
+      // wilayah.id location codes for address persistence
+      provinceCode: validated.provinceCode,
+      regencyCode: validated.regencyCode,
+      districtCode: validated.districtCode,
+      villageCode: validated.villageCode,
+      // Shipping selection
+      selectedCourier: validated.selectedCourier,
+      selectedService: validated.selectedService,
+      shippingCost: validated.shippingCost,
       cartItems,
       sessionId,
     });
@@ -91,7 +105,7 @@ export async function POST(request: NextRequest) {
     const token = jwt.sign(
       {
         userId: result.userId,
-        email: body.email,
+        email: validated.email,
         role: "user",
         isActive: true,
         isDeleted: false,

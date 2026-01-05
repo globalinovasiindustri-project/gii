@@ -43,6 +43,13 @@
       "when": 1765069567937,
       "tag": "0005_normal_impossible_man",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1767429557693,
+      "tag": "0006_wilayah-location-codes",
+      "breakpoints": true
     }
   ]
 }

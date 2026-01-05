@@ -16,7 +16,16 @@ export interface GuestCheckoutData {
     city: string;
     state: string;
     postalCode: string;
+    // wilayah.id location codes
+    provinceCode?: string;
+    regencyCode?: string;
+    districtCode?: string;
+    villageCode?: string;
   };
+  // Shipping selection
+  selectedCourier?: string;
+  selectedService?: string;
+  shippingCost?: number;
 }
 
 // Response interface for successful checkout
@@ -68,6 +77,15 @@ export const checkoutApi = {
         city: data.address.city,
         province: data.address.state,
         postalCode: data.address.postalCode,
+        // wilayah.id location codes
+        provinceCode: data.address.provinceCode,
+        regencyCode: data.address.regencyCode,
+        districtCode: data.address.districtCode,
+        villageCode: data.address.villageCode,
+        // Shipping selection
+        selectedCourier: data.selectedCourier,
+        selectedService: data.selectedService,
+        shippingCost: data.shippingCost,
       }),
     });
 
@@ -85,17 +103,26 @@ export const checkoutApi = {
    * Makes a POST request to create an order for an authenticated user
    *
    * @param addressId - ID of the selected shipping address
+   * @param shippingData - Optional shipping selection data
    * @returns Promise resolving to CheckoutResponse
    * @throws Error if the request fails
    */
   authenticatedCheckout: async (
-    addressId: string
+    addressId: string,
+    shippingData?: {
+      selectedCourier?: string;
+      selectedService?: string;
+      shippingCost?: number;
+    }
   ): Promise<CheckoutResponse> => {
     const response = await fetch("/api/checkout/authenticated", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ addressId }),
+      body: JSON.stringify({
+        addressId,
+        ...shippingData,
+      }),
     });
 
     const result = await response.json();
@@ -141,11 +168,20 @@ export function useAuthenticatedCheckout() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (addressId: string) => {
-      if (!addressId) {
+    mutationFn: (params: {
+      addressId: string;
+      selectedCourier?: string;
+      selectedService?: string;
+      shippingCost?: number;
+    }) => {
+      if (!params.addressId) {
         throw new Error("Silakan pilih alamat pengiriman");
       }
-      return checkoutApi.authenticatedCheckout(addressId);
+      return checkoutApi.authenticatedCheckout(params.addressId, {
+        selectedCourier: params.selectedCourier,
+        selectedService: params.selectedService,
+        shippingCost: params.shippingCost,
+      });
     },
     onSuccess: (result) => {
       // Invalidate cart to clear it after successful checkout

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
@@ -9,6 +9,7 @@ import {
   useGuestCheckout,
   useAuthenticatedCheckout,
 } from "@/hooks/use-checkout";
+import { useCalculateShipping, ShippingOption } from "@/hooks/use-shipping";
 import { MainNavigation } from "@/components/common/main-navigation";
 import { AddressSelector } from "@/components/checkout/address-selector";
 import { ContactInfoForm } from "@/components/checkout/contact-info-form";
@@ -17,7 +18,19 @@ import {
   AddressFormData,
 } from "@/components/checkout/address-form";
 import { OrderSummaryCard } from "@/components/checkout/order-summary-card";
+import { LocationData } from "@/components/checkout/address-form";
 import type { ContactInfoSchema } from "@/lib/validations/checkout.validation";
+import type { CartItem } from "@/lib/types/cart.types";
+
+/**
+ * Calculate total weight of cart items in grams
+ */
+function calculateCartWeight(cartItems: CartItem[]): number {
+  return cartItems.reduce((total, item) => {
+    const weight = item.weight || 1000; // Default 1kg if not specified
+    return total + weight * item.quantity;
+  }, 0);
+}
 
 export default function CheckoutPage() {
   const cartQuery = useCart();
@@ -25,8 +38,12 @@ export default function CheckoutPage() {
   const { addresses, isLoading: isAddressesLoading } = useAddresses();
   const guestCheckout = useGuestCheckout();
   const authenticatedCheckout = useAuthenticatedCheckout();
+  const calculateShipping = useCalculateShipping();
 
   const cartItems = cartQuery.data?.data?.items || [];
+
+  // Calculate cart weight for shipping
+  const cartWeight = useMemo(() => calculateCartWeight(cartItems), [cartItems]);
 
   // Derive default address (always synced with DB)
   const defaultAddress =
@@ -34,6 +51,16 @@ export default function CheckoutPage() {
 
   // Simple state for selected address (authenticated users only)
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+
+  // Shipping state
+  const [selectedShippingOption, setSelectedShippingOption] =
+    useState<ShippingOption | null>(null);
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [shippingError, setShippingError] = useState<string | undefined>();
+
+  // Location state for guest checkout
+  const [guestLocationData, setGuestLocationData] =
+    useState<LocationData | null>(null);
 
   // Guest checkout form refs
   const contactFormRef = useRef<UseFormReturn<ContactInfoSchema> | null>(null);
@@ -62,11 +89,87 @@ export default function CheckoutPage() {
     }
   }, [isLoggedIn]);
 
+  // Get selected address for authenticated users
+  const selectedAddress = useMemo(() => {
+    if (!isLoggedIn || !selectedAddressId || !addresses) return null;
+    return addresses.find((addr) => addr.id === selectedAddressId) || null;
+  }, [isLoggedIn, selectedAddressId, addresses]);
+
+  // Trigger shipping calculation when district is selected (guest checkout)
+  const handleGuestLocationChange = useCallback(
+    (location: LocationData | null) => {
+      setGuestLocationData(location);
+      // Reset shipping when location changes
+      setSelectedShippingOption(null);
+      setShippingOptions([]);
+      setShippingError(undefined);
+
+      if (location?.regencyCode && cartWeight > 0) {
+        calculateShipping.mutate(
+          {
+            destinationRegencyCode: location.regencyCode,
+            weightInGrams: cartWeight,
+          },
+          {
+            onSuccess: (options) => {
+              setShippingOptions(options);
+              setShippingError(undefined);
+            },
+            onError: (error) => {
+              setShippingError(
+                error.message || "Gagal menghitung ongkos kirim"
+              );
+              setShippingOptions([]);
+            },
+          }
+        );
+      }
+    },
+    [cartWeight, calculateShipping]
+  );
+
+  // Trigger shipping calculation when address is selected (authenticated checkout)
+  useEffect(() => {
+    if (isLoggedIn && selectedAddress?.regencyCode && cartWeight > 0) {
+      // Reset shipping when address changes
+      setSelectedShippingOption(null);
+      setShippingOptions([]);
+      setShippingError(undefined);
+
+      calculateShipping.mutate(
+        {
+          destinationRegencyCode: selectedAddress.regencyCode,
+          weightInGrams: cartWeight,
+        },
+        {
+          onSuccess: (options) => {
+            setShippingOptions(options);
+            setShippingError(undefined);
+          },
+          onError: (error) => {
+            setShippingError(error.message || "Gagal menghitung ongkos kirim");
+            setShippingOptions([]);
+          },
+        }
+      );
+    } else if (isLoggedIn && selectedAddress && !selectedAddress.regencyCode) {
+      // Address doesn't have regencyCode - clear shipping options
+      setShippingOptions([]);
+      setSelectedShippingOption(null);
+      setShippingError(undefined);
+    }
+  }, [isLoggedIn, selectedAddress, cartWeight]);
+
   // Handle checkout
   const handleCheckout = () => {
     if (isLoggedIn) {
       if (selectedAddressId) {
-        authenticatedCheckout.mutate(selectedAddressId);
+        authenticatedCheckout.mutate({
+          addressId: selectedAddressId,
+          selectedCourier: selectedShippingOption?.courierName,
+          selectedService: selectedShippingOption?.serviceName,
+          shippingCost: selectedShippingOption?.cost,
+        });
       }
     } else {
       // Validate and get form data
@@ -81,24 +184,42 @@ export default function CheckoutPage() {
           fullName: contactData.fullName,
           email: contactData.email,
           phone: contactData.phone,
-          address: addressData,
+          address: {
+            ...addressData,
+            provinceCode: guestLocationData?.provinceCode,
+            regencyCode: guestLocationData?.regencyCode,
+            districtCode: guestLocationData?.districtCode,
+            villageCode: guestLocationData?.villageCode,
+          },
+          selectedCourier: selectedShippingOption?.courierName,
+          selectedService: selectedShippingOption?.serviceName,
+          shippingCost: selectedShippingOption?.cost,
         });
       }
     }
   };
 
   // Determine if checkout button should be disabled
-  const isCheckoutDisabled = isLoggedIn ? !selectedAddressId : !formsValid;
+  // For guest: forms must be valid AND shipping must be selected
+  // For authenticated: address must be selected AND shipping must be selected (if regencyCode exists)
+  const isCheckoutDisabled = isLoggedIn
+    ? !selectedAddressId ||
+      (!!selectedAddress?.regencyCode && !selectedShippingOption)
+    : !formsValid || !selectedShippingOption;
 
   const isSubmitting = isLoggedIn
     ? authenticatedCheckout.isPending
     : guestCheckout.isPending;
 
+  // Check if selected address needs location update (authenticated users)
+  const addressNeedsLocationUpdate =
+    isLoggedIn && selectedAddress && !selectedAddress.regencyCode;
+
   return (
     <div className="flex flex-col min-h-screen">
       <MainNavigation />
       <div className="grid lg:grid-cols-2 flex-1 h-full">
-        <div className="col-span-1 space-y-6 p-5 lg:p-10 flex justify-center lg:justify-end">
+        <div className="col-span-1 space-y-6 p-5 lg:p-16 flex justify-center lg:justify-end">
           <div className="flex-1 max-w-lg">
             {isMeLoading ? (
               <div className="text-center py-12">
@@ -112,11 +233,13 @@ export default function CheckoutPage() {
                   <p className="text-muted-foreground">Memuat alamat...</p>
                 </div>
               ) : (
-                <AddressSelector
-                  addresses={addresses || []}
-                  selectedAddressId={selectedAddressId}
-                  onSelectAddress={setSelectedAddressId}
-                />
+                <div className="space-y-8">
+                  <AddressSelector
+                    addresses={addresses || []}
+                    selectedAddressId={selectedAddressId}
+                    onSelectAddress={setSelectedAddressId}
+                  />
+                </div>
               )
             ) : (
               <div className="space-y-8">
@@ -141,6 +264,7 @@ export default function CheckoutPage() {
                     showDefaultCheckbox={false}
                     showSubmitButton={false}
                     formRef={(form) => (addressFormRef.current = form)}
+                    onLocationChange={handleGuestLocationChange}
                   />
                 </div>
               </div>
@@ -148,7 +272,7 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <div className="lg:bg-muted col-span-1 space-y-6 p-5 lg:p-10 flex justify-center lg:justify-start">
+        <div className="lg:bg-muted col-span-1 space-y-6 p-5 lg:p-16 flex justify-center lg:justify-start">
           <div className="flex-1 max-w-lg space-y-6">
             <h2 className="text-lg font-medium tracking-tight">
               Ringkasan Pesanan
@@ -164,6 +288,17 @@ export default function CheckoutPage() {
                 onCheckout={handleCheckout}
                 isSubmitting={isSubmitting}
                 disabled={isCheckoutDisabled}
+                shippingCost={selectedShippingOption?.cost ?? null}
+                courierName={
+                  selectedShippingOption
+                    ? `${selectedShippingOption.courierName} - ${selectedShippingOption.serviceName}`
+                    : null
+                }
+                isCalculatingShipping={calculateShipping.isPending}
+                shippingOptions={shippingOptions}
+                selectedShippingOption={selectedShippingOption}
+                onSelectShipping={setSelectedShippingOption}
+                shippingError={shippingError}
               />
             )}
           </div>

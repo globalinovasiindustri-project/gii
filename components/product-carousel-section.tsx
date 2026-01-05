@@ -45,7 +45,7 @@ export function ProductCarouselSection({
   return (
     <section className="">
       <div className="mb-8 flex items-center justify-between mx-4 md:mx-10">
-        <h2 className="text-3xl font-semibold tracking-tighter leading-tight md:text-4xl">
+        <h2 className="text-xl font-semibold tracking-tighter leading-tight md:text-3xl">
           {title}
         </h2>
         <div className="flex space-x-2">

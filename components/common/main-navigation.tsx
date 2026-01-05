@@ -29,7 +29,7 @@ export function MainNavigation() {
   }, []);
 
   return (
-    <nav className="w-full z-50 top-0 flex items-center justify-between bg-background/80 backdrop-blur-md border-b border-foreground-200 px-4 h-[64px] md:h-[80px] md:px-8">
+    <nav className="sticky w-full z-50 top-0 flex items-center justify-between bg-background/80 backdrop-blur-md border-b border-foreground-200 px-4 h-[64px] md:h-[80px] md:px-8">
       {/* Left: Logo + Menu */}
       <div className="flex items-center space-x-12">
         <Link href="/">

@@ -263,6 +263,10 @@ export function AddressSelector({
                 state: editingAddress.state,
                 postalCode: editingAddress.postalCode,
                 isDefault: editingAddress.isDefault,
+                provinceCode: editingAddress.provinceCode ?? undefined,
+                regencyCode: editingAddress.regencyCode ?? undefined,
+                districtCode: editingAddress.districtCode ?? undefined,
+                villageCode: editingAddress.villageCode ?? undefined,
               }}
               onSubmit={handleUpdateAddress}
               onCancel={() => setEditingAddress(null)}

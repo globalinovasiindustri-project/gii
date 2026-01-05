@@ -10,6 +10,10 @@ import {
 
 interface AuthenticatedCheckoutRequest {
   addressId: string;
+  // Shipping selection (optional for backward compatibility)
+  selectedCourier?: string;
+  selectedService?: string;
+  shippingCost?: number;
 }
 
 /**
@@ -49,11 +53,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 6. Call orderService.createAuthenticatedOrder
+    // 6. Call orderService.createAuthenticatedOrder with shipping data
     const result = await orderService.createAuthenticatedOrder({
       userId,
       addressId: body.addressId,
       cartItems,
+      selectedCourier: body.selectedCourier,
+      selectedService: body.selectedService,
+      shippingCost: body.shippingCost,
     });
 
     // 7. Return order ID and order number in response

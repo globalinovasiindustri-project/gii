@@ -28,6 +28,8 @@ export interface CartItem {
   thumbnailUrl: string | null;
   /** Variant selections (e.g., { "Warna": "Black", "Kapasitas": "128GB" }) */
   variantSelections: Record<string, string>;
+  /** Weight in grams (from product group) */
+  weight: number;
   /** Timestamp when added */
   addedAt: number;
   /** Timestamp when last updated */

@@ -189,6 +189,12 @@ export const addresses = pgTable(
     postalCode: text("postal_code").notNull(),
     country: text("country").notNull().default("ID"),
 
+    // wilayah.id location codes for address lookup
+    provinceCode: text("province_code"),
+    regencyCode: text("regency_code"),
+    districtCode: text("district_code"),
+    villageCode: text("village_code"),
+
     // Default address flag
     isDefault: boolean("is_default").notNull().default(false),
 

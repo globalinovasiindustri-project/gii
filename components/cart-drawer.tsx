@@ -3,7 +3,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { X, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CartItem } from "@/components/cart/cart-item";
 import { CartDrawerSkeleton } from "@/components/cart/cart-drawer-skeleton";
@@ -96,9 +101,9 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         <SheetHeader className="border-b px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xl font-medium tracking-tight">
+              <SheetTitle className="text-xl font-medium tracking-tight">
                 Keranjang Belanja
-              </span>
+              </SheetTitle>
             </div>
             <div className="flex items-center gap-3">
               <Button

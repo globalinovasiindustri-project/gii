@@ -2,6 +2,24 @@ import { db } from "@/lib/db/db";
 import { addresses, SelectAddress, InsertAddress } from "@/lib/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 
+/**
+ * Input type for creating an address from checkout form data
+ */
+export type CreateAddressFromCheckoutInput = {
+  userId: string;
+  addressLabel: string;
+  streetAddress: string;
+  village: string;
+  district: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  provinceCode?: string;
+  regencyCode?: string;
+  districtCode?: string;
+  villageCode?: string;
+};
+
 export const addressService = {
   /**
    * Get all addresses for a user, ordered by default flag first, then by creation date descending
@@ -199,6 +217,62 @@ export const addressService = {
         .where(eq(addresses.id, addressId));
 
       return true;
+    });
+  },
+
+  /**
+   * Create address from checkout form data
+   * Automatically sets as default if it's the user's first address
+   * Handles optional wilayah.id location codes
+   */
+  createAddressFromCheckout: async (
+    input: CreateAddressFromCheckoutInput
+  ): Promise<SelectAddress> => {
+    const {
+      userId,
+      addressLabel,
+      streetAddress,
+      village,
+      district,
+      city,
+      state,
+      postalCode,
+      provinceCode,
+      regencyCode,
+      districtCode,
+      villageCode,
+    } = input;
+
+    return await db.transaction(async (tx) => {
+      // Check if this is the user's first address
+      const existingAddresses = await tx
+        .select()
+        .from(addresses)
+        .where(eq(addresses.userId, userId));
+
+      const isFirstAddress = existingAddresses.length === 0;
+
+      // Create new address with checkout data
+      const [newAddress] = await tx
+        .insert(addresses)
+        .values({
+          userId,
+          addressLabel,
+          streetAddress,
+          village,
+          district,
+          city,
+          state,
+          postalCode,
+          provinceCode: provinceCode ?? null,
+          regencyCode: regencyCode ?? null,
+          districtCode: districtCode ?? null,
+          villageCode: villageCode ?? null,
+          isDefault: isFirstAddress,
+        })
+        .returning();
+
+      return newAddress;
     });
   },
 };
