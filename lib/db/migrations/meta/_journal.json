@@ -57,6 +57,13 @@
       "when": 1767649174389,
       "tag": "0007_fixed_rhodey",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1768416908038,
+      "tag": "0008_curly_zemo",
+      "breakpoints": true
     }
   ]
 }

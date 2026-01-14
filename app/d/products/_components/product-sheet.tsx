@@ -159,24 +159,91 @@ function ProductForm({
     );
   };
 
-  // react-hook-form instance aligned with productSchema
-  const form = useForm<ProductSchema>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
+  // Compute initial values based on mode
+  const getInitialValues = (): ProductSchema => {
+    if (mode === "edit" && selectedProduct) {
+      const allowedVariantValues = Object.values(VARIANT_TYPES).map(
+        (v) => v.value
+      ) as VariantType[];
+      const initialVariantTypes = Array.from(
+        new Set(selectedProduct.variants.map((v) => v.variant))
+      ).filter((v): v is VariantType =>
+        (allowedVariantValues as readonly string[]).includes(v)
+      );
+
+      const initialCombinations = (selectedProduct.products ?? []).map((p) => ({
+        id: p.id,
+        variants:
+          (selectedProduct.variantSelectionsByProductId &&
+            selectedProduct.variantSelectionsByProductId[p.id]) ||
+          {},
+        sku: p.sku ?? "",
+        name: p.name ?? "",
+        price: String(p.price ?? 0),
+        stock: String(p.stock ?? 0),
+        active: !!p.isActive,
+      }));
+
+      const existingImages = selectedProduct.productGroup.images || [];
+      const savedDescriptions =
+        selectedProduct.productGroup.additionalDescriptions;
+      const initialDescriptions =
+        savedDescriptions && Array.isArray(savedDescriptions)
+          ? savedDescriptions.map((d: any) => ({
+              title: d.title,
+              body: d.body,
+            }))
+          : [];
+
+      return {
+        id: selectedProduct.productGroup.id,
+        name: selectedProduct.productGroup.name ?? "",
+        category: (selectedProduct.productGroup.category ||
+          "smartphones") as ProductCategory,
+        brand: (selectedProduct.productGroup.brand || "apple") as ProductBrand,
+        isActive: !!selectedProduct.productGroup.isActive,
+        hasVariants: initialVariantTypes.length > 0,
+        isHighlighted: !!selectedProduct.productGroup.isHighlighted,
+        weight: selectedProduct.productGroup?.weight ?? undefined,
+        description: selectedProduct.productGroup.description ?? undefined,
+        variantTypes: initialVariantTypes,
+        combinations: initialCombinations.map(toCombinationPayload),
+        images: existingImages,
+        additionalDescriptions: initialDescriptions,
+      };
+    }
+
+    // Create mode defaults
+    return {
       name: "",
       category: "smartphones" as ProductCategory,
       brand: "apple" as ProductBrand,
-      // category & brand akan dipilih via Select; biarkan tidak di-set pada default
-      isActive: true, // sesuai Switch defaultChecked
-      hasVariants: true, // sesuai Switch defaultChecked
-      isHighlighted: false, // default false for featured product toggle
-      // berat opsional; biarkan undefined sampai user isi
+      isActive: true,
+      hasVariants: true,
+      isHighlighted: false,
       weight: undefined,
       description: undefined,
       variantTypes: [],
-      combinations: productCombinations.map(toCombinationPayload),
+      combinations: [
+        {
+          id: "1",
+          variants: {},
+          sku: "",
+          name: undefined,
+          price: 0,
+          stock: 0,
+          active: true,
+        },
+      ],
       images: [],
-    },
+      additionalDescriptions: [],
+    };
+  };
+
+  // react-hook-form instance aligned with productSchema
+  const form = useForm<ProductSchema>({
+    resolver: zodResolver(productSchema),
+    defaultValues: getInitialValues(),
   });
 
   useEffect(() => {
@@ -228,7 +295,7 @@ function ProductForm({
     }
   };
 
-  // Prefill defaults when editing an existing product or reset when creating
+  // Prefill state variables when editing an existing product or reset when creating
   useEffect(() => {
     if (mode === "edit" && selectedProduct) {
       const allowedVariantValues = Object.values(VARIANT_TYPES).map(
@@ -272,26 +339,13 @@ function ProductForm({
             body: d.body,
           }))
         );
+      } else {
+        setAdditionalDescriptions([]);
       }
 
       // Load existing images from selectedProduct into productImages state
       const existingImages = selectedProduct.productGroup.images || [];
       setProductImages(existingImages);
-
-      form.reset({
-        id: selectedProduct.productGroup.id,
-        name: selectedProduct.productGroup.name ?? "",
-        category: selectedProduct.productGroup.category as ProductCategory,
-        brand: selectedProduct.productGroup.brand as ProductBrand,
-        isActive: !!selectedProduct.productGroup.isActive,
-        hasVariants: initialVariantTypes.length > 0,
-        isHighlighted: !!selectedProduct.productGroup.isHighlighted,
-        weight: selectedProduct.productGroup?.weight ?? undefined,
-        description: selectedProduct.productGroup.description ?? undefined,
-        variantTypes: initialVariantTypes,
-        combinations: initialCombinations.map(toCombinationPayload),
-        images: existingImages,
-      });
     } else if (mode === "create") {
       // Reset form and state for create mode
       setSelectedVariants([]);
@@ -888,14 +942,15 @@ export function ProductSheet({
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
-        side="bottom"
-        className="max-h-[100vh] w-full p-0 tracking-tight"
+        side="right"
+        className="w-full max-w-2xl p-0 tracking-tight sm:max-w-3xl"
       >
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
-          <SheetTitle className="font-normal">Add New Product</SheetTitle>
+          <SheetTitle className="font-normal">Buat Produk</SheetTitle>
         </SheetHeader>
 
         <ProductForm
+          key={mode === "edit" ? selectedProduct?.productGroup.id : "create"}
           onClose={onClose}
           onSave={onSave}
           selectedProduct={selectedProduct}

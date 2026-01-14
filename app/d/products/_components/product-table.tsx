@@ -91,7 +91,7 @@ export function ProductTable({
     },
     {
       accessorKey: "productGroup.name",
-      header: "Name",
+      header: "Nama",
       cell: ({ row }) => <div>{row.original.productGroup.name || "-"}</div>,
     },
     {
@@ -105,7 +105,7 @@ export function ProductTable({
     },
     {
       accessorKey: "productGroup.category",
-      header: "Category",
+      header: "Kategori",
       cell: ({ row }) => (
         <div className="capitalize">
           {row.original.productGroup.category || "-"}
