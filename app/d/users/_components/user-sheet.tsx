@@ -27,7 +27,7 @@ export type User = {
   id: string;
   name: string | null;
   email: string;
-  role: "user" | "admin" | "super_admin";
+  role: string; // Database returns string, validated at API level
   isActive: boolean;
   isConfirmed: boolean;
   createdAt: Date;
@@ -66,7 +66,10 @@ export function UserSheet({
         id: selectedUser.id,
         name: selectedUser.name || "",
         email: selectedUser.email,
-        role: selectedUser.role === "super_admin" ? "admin" : selectedUser.role,
+        role:
+          selectedUser.role === "super_admin"
+            ? "admin"
+            : (selectedUser.role as "user" | "admin"),
       });
     } else {
       form.reset({

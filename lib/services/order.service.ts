@@ -370,7 +370,7 @@ export const orderService = {
           subtotal,
           shippingCost,
           total,
-          orderStatus: "pending",
+          orderStatus: "processing",
           paymentStatus: "paid", // Auto-paid for MVP
           currency: "IDR",
           customerNotes: input.notes,
@@ -521,7 +521,7 @@ export const orderService = {
           subtotal,
           shippingCost,
           total,
-          orderStatus: "pending",
+          orderStatus: "processing",
           paymentStatus: "paid", // Auto-paid for MVP
           currency: "IDR",
           // Store shipping selection details

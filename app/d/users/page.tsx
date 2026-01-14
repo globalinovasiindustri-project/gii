@@ -93,7 +93,7 @@ export default function UsersPage() {
       createUserMutation.mutate({
         name: userData.name!,
         email: userData.email!,
-        role: userData.role!,
+        role: userData.role as "user" | "admin" | "super_admin",
       });
     }
 

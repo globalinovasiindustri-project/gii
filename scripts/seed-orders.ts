@@ -271,7 +271,7 @@ async function main() {
       discount: 0,
       total: order4Total,
       currency: "IDR",
-      orderStatus: orderStatusOptions.PENDING,
+      orderStatus: orderStatusOptions.PROCESSING,
       paymentStatus: paymentStatusOptions.PENDING,
       paymentMethod: "stripe",
       createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago

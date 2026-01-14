@@ -21,7 +21,7 @@ export type Role = (typeof roleOptions)[keyof typeof roleOptions];
 
 // Order status options
 export const orderStatusOptions = {
-  PENDING: "pending",
+  PROCESSING: "processing",
   SHIPPED: "shipped",
   DELIVERED: "delivered",
   CANCELLED: "cancelled",
@@ -299,7 +299,7 @@ export const orders = pgTable(
     currency: text("currency").notNull().default("IDR"),
 
     // Status tracking (using text fields with TypeScript constants for type safety)
-    orderStatus: text("order_status").notNull().default("pending"),
+    orderStatus: text("order_status").notNull().default("processing"),
     paymentStatus: text("payment_status").notNull().default("pending"),
 
     // Payment details
