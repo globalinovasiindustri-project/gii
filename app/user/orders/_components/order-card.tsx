@@ -26,12 +26,27 @@ type OrderCardProps = {
 };
 
 // Parse shipping address JSON to readable string
-function parseAddress(addressJson: string): string {
+function parseAddress(addressJson: string): {
+  address: string;
+  phone: string | null;
+} {
   try {
-    const address = JSON.parse(addressJson);
-    return `${address.recipientName}, ${address.phone}, ${address.fullAddress}, ${address.city}, ${address.province} ${address.postalCode}`;
+    const addr = JSON.parse(addressJson);
+    // Build address from available fields
+    const parts = [
+      addr.fullAddress,
+      addr.village,
+      addr.district,
+      addr.city,
+      addr.province || addr.state, // Support both field names
+      addr.postalCode,
+    ].filter(Boolean);
+    return {
+      address: parts.join(", "),
+      phone: addr.phone || null,
+    };
   } catch {
-    return addressJson;
+    return { address: addressJson, phone: null };
   }
 }
 
@@ -187,9 +202,15 @@ export function OrderCard({ order, isHighlighted = false }: OrderCardProps) {
             {/* Shipping Address (Requirement 2.3) */}
             <div>
               <h3 className="font-medium text-sm mb-2">Alamat Pengiriman</h3>
-              <p className="text-sm text-muted-foreground">
-                {parseAddress(order.shippingAddress)}
-              </p>
+              {(() => {
+                const { address, phone } = parseAddress(order.shippingAddress);
+                return (
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    {phone && <p>Telepon: +62 {phone}</p>}
+                    <p>{address}</p>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Customer Notes */}

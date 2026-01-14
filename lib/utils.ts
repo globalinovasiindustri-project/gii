@@ -31,18 +31,25 @@ export function formatCurrency(
 }
 
 // Address formatting utility
+// Handles both order snapshots (fullAddress, province) and address records (streetAddress, state)
 export function formatAddress(address: any): string {
   if (!address || typeof address !== "object") {
     return "N/A";
   }
 
+  // Support both field naming conventions:
+  // - Order snapshots use: fullAddress, province
+  // - Address records use: streetAddress, state
+  const streetAddress = address.fullAddress || address.streetAddress;
+  const province = address.province || address.state;
+
   const parts = [
-    address.streetAddress,
-    address.addressLine2,
+    streetAddress,
+    address.village,
+    address.district,
     address.city,
-    address.state,
+    province,
     address.postalCode,
-    address.country,
   ].filter(Boolean);
 
   return parts.join(", ");

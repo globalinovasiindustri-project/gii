@@ -42,16 +42,6 @@ export function MainNavigation() {
               Smartphone
             </Link>
           </li>
-          <li>
-            <Link href="/contact" className="hover:text-primary">
-              Elektronik
-            </Link>
-          </li>
-          <li>
-            <Link href="/contact" className="hover:text-primary">
-              Komputer
-            </Link>
-          </li>
         </ul>
       </div>
 

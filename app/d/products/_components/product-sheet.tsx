@@ -887,9 +887,12 @@ export function ProductSheet({
 }: ProductSheetProps) {
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="max-h-[100vh] w-full p-0">
+      <SheetContent
+        side="bottom"
+        className="max-h-[100vh] w-full p-0 tracking-tight"
+      >
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
-          <SheetTitle>Add New Product</SheetTitle>
+          <SheetTitle className="font-normal">Add New Product</SheetTitle>
         </SheetHeader>
 
         <ProductForm

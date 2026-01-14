@@ -271,7 +271,7 @@ export function BulkOrderSection() {
               onClick={addItem}
               className="flex-1 border-dashed"
             >
-              <Plus className="mr-2 size-4" />
+              <Plus className="size-4" />
               Tambah Produk
             </Button>
             <Button
@@ -279,7 +279,7 @@ export function BulkOrderSection() {
               disabled={!isFormValid}
               className="flex-1 bg-black text-white hover:bg-black/90"
             >
-              <Send className="mr-2 size-4" />
+              <Send className="size-4" />
               Minta Penawaran
             </Button>
           </div>

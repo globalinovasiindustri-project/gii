@@ -4,10 +4,7 @@ import {
   Dropzone,
   DropZoneArea,
   DropzoneDescription,
-  DropzoneFileList,
-  DropzoneFileListItem,
   DropzoneMessage,
-  DropzoneRemoveFile,
   DropzoneTrigger,
   useDropzone,
 } from "@/components/ui/dropzone";
@@ -172,7 +169,7 @@ export function MultiUploader({ images, onImagesChange }: MultiUploaderProps) {
             <DropzoneTrigger className="flex flex-col items-center gap-4 bg-transparent p-10 text-center text-sm">
               <CloudUploadIcon className="size-8" />
               <div>
-                <p className="font-semibold">Upload listing images</p>
+                <p className="font-medium">Upload listing images</p>
                 <p className="text-sm text-muted-foreground">
                   Click here or drag and drop to upload
                 </p>
@@ -181,9 +178,11 @@ export function MultiUploader({ images, onImagesChange }: MultiUploaderProps) {
           </DropZoneArea>
         </div>
 
-        {/* Display existing/uploaded images */}
-        {images.length > 0 && (
+        {/* Combined grid: uploaded images + pending uploads in sequence */}
+        {(images.length > 0 ||
+          dropzone.fileStatuses.some((f) => f.status === "pending")) && (
           <div className="grid grid-cols-3 gap-3 p-0">
+            {/* Uploaded images */}
             {images.map((image, index) => {
               const hasError = imageLoadErrors.some(
                 (err) => err.index === index
@@ -199,7 +198,6 @@ export function MultiUploader({ images, onImagesChange }: MultiUploaderProps) {
                   )}
                 >
                   {hasError ? (
-                    // Display placeholder image if image URL fails to load
                     <div className="aspect-video flex flex-col items-center justify-center bg-muted">
                       <AlertCircle className="size-8 text-destructive mb-2" />
                       <p className="text-xs text-destructive text-center px-2">
@@ -216,7 +214,6 @@ export function MultiUploader({ images, onImagesChange }: MultiUploaderProps) {
                     />
                   )}
 
-                  {/* Thumbnail selection UI with star icon */}
                   <button
                     type="button"
                     onClick={() => handleThumbnailSelect(index)}
@@ -259,60 +256,41 @@ export function MultiUploader({ images, onImagesChange }: MultiUploaderProps) {
                 </div>
               );
             })}
-          </div>
-        )}
 
-        {/* Display files being uploaded */}
-        <DropzoneFileList className="grid grid-cols-3 gap-3 p-0">
-          {dropzone.fileStatuses.map((file) => (
-            <DropzoneFileListItem
-              className="overflow-hidden rounded-md bg-secondary p-0 shadow-sm"
-              key={file.id}
-              file={file}
-            >
-              {file.status === "pending" && (
-                <div className="relative aspect-video">
-                  {/* Show preview immediately */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={URL.createObjectURL(file.file)}
-                    alt={`preview-${file.fileName}`}
-                    className="aspect-video object-cover"
-                  />
-                  {/* Loading overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent" />
-                      <p className="text-xs text-white">Uploading...</p>
+            {/* Pending uploads - inline in same grid */}
+            {dropzone.fileStatuses
+              .filter((file) => file.status === "pending")
+              .map((file) => (
+                <div
+                  key={file.id}
+                  className="overflow-hidden rounded-md bg-secondary p-0 shadow-sm"
+                >
+                  <div className="relative aspect-video">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={URL.createObjectURL(file.file)}
+                      alt={`preview-${file.fileName}`}
+                      className="aspect-video object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent" />
+                        <p className="text-xs text-white">Uploading...</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-2 pl-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm">{file.fileName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(file.file.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
                     </div>
                   </div>
                 </div>
-              )}
-              {file.status === "success" && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={file.result}
-                  alt={`uploaded-${file.fileName}`}
-                  className="aspect-video object-cover"
-                />
-              )}
-              <div className="flex items-center justify-between p-2 pl-4">
-                <div className="min-w-0">
-                  <p className="truncate text-sm">{file.fileName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {(file.file.size / (1024 * 1024)).toFixed(2)} MB
-                  </p>
-                </div>
-                <DropzoneRemoveFile
-                  variant="ghost"
-                  className="shrink-0 hover:outline"
-                >
-                  <Trash2Icon className="size-4" />
-                </DropzoneRemoveFile>
-              </div>
-            </DropzoneFileListItem>
-          ))}
-        </DropzoneFileList>
+              ))}
+          </div>
+        )}
       </Dropzone>
     </div>
   );

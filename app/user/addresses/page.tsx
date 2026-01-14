@@ -115,11 +115,11 @@ export default function AddressesPage() {
   const isSubmitting = isCreating || isUpdating;
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-5xl">
+    <div className="container mx-auto py-8 px-4 max-w-5xl tracking-tight">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Alamat Saya</h1>
+        <h1 className="text-2xl font-medium mb-6">Alamat Saya</h1>
         <Button onClick={handleAddAddress}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="size-4" />
           Tambah Alamat
         </Button>
       </div>

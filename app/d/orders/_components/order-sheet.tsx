@@ -210,6 +210,13 @@ export function OrderSheet({
                 <p className="font-medium">{order.customerName}</p>
               </div>
 
+              {shippingAddress.phone && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground text-xs">Telepon:</p>
+                  <p className="font-medium">+62 {shippingAddress.phone}</p>
+                </div>
+              )}
+
               <div className="text-sm">
                 <p className="text-muted-foreground text-xs">Alamat:</p>
                 <address className="not-italic font-medium leading-relaxed">

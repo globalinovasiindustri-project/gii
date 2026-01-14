@@ -316,6 +316,7 @@ export const orderService = {
         .values({
           email: input.customerEmail,
           name: input.customerName,
+          phone: input.customerPhone, // Store phone at user level
           isConfirmed: true, // Auto-confirmed for guest checkout
           isActive: true,
           role: "user",
@@ -491,14 +492,15 @@ export const orderService = {
       const total = subtotal + shippingCost;
 
       // 5. Prepare address JSON snapshot
+      // Use consistent field names with guest checkout (province instead of state)
       const shippingAddress = {
         addressLabel: address.addressLabel,
-        phone: user.email, // Use email as fallback since phone removed from address
+        phone: user.phone || null, // Use user's phone from profile
         fullAddress: address.streetAddress,
         village: address.village,
         district: address.district,
         city: address.city,
-        state: address.state,
+        province: address.state, // Map state → province for consistency with guest checkout
         postalCode: address.postalCode,
         country: address.country,
         // Include location codes for reference

@@ -130,7 +130,7 @@ export default function OrdersPage() {
           onClick={handleExport}
           disabled={exportMutation.isPending}
         >
-          <Download className="mr-2 h-4 w-4" />
+          <Download className="h-4 w-4" />
           {exportMutation.isPending ? "Mengekspor..." : "Export CSV"}
         </Button>
       </div>

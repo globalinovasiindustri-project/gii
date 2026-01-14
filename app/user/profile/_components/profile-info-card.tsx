@@ -116,15 +116,20 @@ export function ProfileInfoCard({
             {/* Phone field */}
             <Field>
               <div className="group relative w-full">
-                <label className="text-sm mb-1"> Nomor Handphone</label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder=""
-                  disabled={isSubmitting}
-                  className="h-11"
-                  {...form.register("phone")}
-                />
+                <label className="text-sm mb-1">Nomor Handphone</label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
+                    +62
+                  </span>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder=""
+                    disabled={isSubmitting}
+                    className="h-11 rounded-l-none"
+                    {...form.register("phone")}
+                  />
+                </div>
               </div>
               {form.formState.errors.phone && (
                 <p className="text-destructive text-sm">

@@ -23,10 +23,12 @@ export function AddressCard({
 }: AddressCardProps) {
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 tracking-tight">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-base">{address.addressLabel}</CardTitle>
+            <CardTitle className="text-base font-medium">
+              {address.addressLabel}
+            </CardTitle>
           </div>
           {address.isDefault && (
             <Badge variant="secondary" className="shrink-0">
@@ -36,7 +38,7 @@ export function AddressCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        <p className="text-sm">{address.streetAddress}</p>
+        <p className="">{address.streetAddress}</p>
         <p className="text-sm text-muted-foreground">
           {[address.village, address.district].filter(Boolean).join(", ")}
         </p>
@@ -49,10 +51,16 @@ export function AddressCard({
             <Edit className="h-4 w-4 mr-1" />
             Edit
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onDelete(address)}>
-            <Trash2 className="h-4 w-4 mr-1" />
-            Hapus
-          </Button>
+          {!address.isDefault && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(address)}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Hapus
+            </Button>
+          )}
           {!address.isDefault && (
             <Button
               variant="outline"
