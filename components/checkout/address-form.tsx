@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Field } from "@/components/ui/field";
@@ -202,6 +202,31 @@ export function AddressForm({
     setVillageCode(value);
     emitLocation(value);
   };
+
+  // Watch postal code and trigger location emit when it's valid (5 digits)
+  const postalCodeValue = form.watch("postalCode");
+  const hasEmittedRef = React.useRef(false);
+
+  // Trigger location emit when postal code is complete and all location fields are filled
+  React.useEffect(() => {
+    if (
+      postalCodeValue &&
+      /^\d{5}$/.test(postalCodeValue) &&
+      villageCode &&
+      provinceCode &&
+      regencyCode &&
+      districtCode &&
+      !hasEmittedRef.current
+    ) {
+      hasEmittedRef.current = true;
+      emitLocation(villageCode);
+    }
+
+    // Reset flag when location changes
+    if (!villageCode || !postalCodeValue || !/^\d{5}$/.test(postalCodeValue)) {
+      hasEmittedRef.current = false;
+    }
+  }, [postalCodeValue, villageCode, provinceCode, regencyCode, districtCode]);
 
   return (
     <form

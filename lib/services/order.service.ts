@@ -659,6 +659,57 @@ export const orderService = {
   },
 
   /**
+   * Get all orders for CSV export (no pagination)
+   * Returns flattened order data suitable for CSV generation
+   */
+  async getOrdersForExport(filters: Omit<OrderFilters, "page" | "pageSize">) {
+    const filterConditions = createOrderFilters({
+      ...filters,
+      page: 1,
+      pageSize: 10000, // Large limit for export
+    });
+
+    const validConditions = filterConditions.filter(
+      (c): c is SQL<unknown> => c !== undefined
+    );
+
+    const whereClause =
+      validConditions.length > 0 ? and(...validConditions) : undefined;
+
+    // Query orders with order items for export
+    const results = await db
+      .select({
+        // Order fields
+        orderNumber: orders.orderNumber,
+        customerName: orders.customerName,
+        customerEmail: orders.customerEmail,
+        shippingAddress: orders.shippingAddress,
+        subtotal: orders.subtotal,
+        shippingCost: orders.shippingCost,
+        total: orders.total,
+        orderStatus: orders.orderStatus,
+        paymentStatus: orders.paymentStatus,
+        carrier: orders.carrier,
+        trackingNumber: orders.trackingNumber,
+        customerNotes: orders.customerNotes,
+        adminNotes: orders.adminNotes,
+        createdAt: orders.createdAt,
+        // Order item fields
+        productName: orderItems.productName,
+        productSku: orderItems.productSku,
+        quantity: orderItems.quantity,
+        unitPrice: orderItems.unitPrice,
+        itemSubtotal: orderItems.subtotal,
+      })
+      .from(orders)
+      .leftJoin(orderItems, eq(orderItems.orderId, orders.id))
+      .where(whereClause)
+      .orderBy(desc(orders.createdAt));
+
+    return results;
+  },
+
+  /**
    * Update admin notes for an order
    */
   async updateAdminNotes(

@@ -208,7 +208,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const productSchema = generateProductSchema(product);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col tracking-tight">
       {/* JSON-LD Structured Data for SEO */}
       <Script
         id="product-schema"

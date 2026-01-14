@@ -86,9 +86,9 @@ export function CartItem({
 
   const imageSize = variant === "drawer" ? "size-20" : "size-24 md:size-32";
   const containerClasses = cn(
-    "flex py-3 md:py-4 gap-3 md:gap-4 transition-all duration-300 ease-in-out",
+    "flex py-4 md:py-6 gap-3 md:gap-4 transition-all duration-300 ease-in-out",
     variant === "drawer" ? "gap-4" : "gap-4 md:gap-6",
-    "hover:bg-gray-50 rounded-lg px-3 md:px-4 transition-colors",
+    "hover:bg-gray-50 px-3 md:px-4 transition-colors",
     isRemoving && "opacity-0 scale-95 h-0 py-0 overflow-hidden",
     isUpdating && "scale-[0.99]"
   );

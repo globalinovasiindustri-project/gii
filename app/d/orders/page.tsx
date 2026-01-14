@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { Download } from "lucide-react";
 import { OrderFilters } from "./_components/order-filters";
 import { OrderGrid } from "./_components/order-grid";
 import { OrderSheet } from "./_components/order-sheet";
+import { Button } from "@/components/ui/button";
 import {
   useInfiniteOrders,
   useUpdateOrderStatus,
   useUpdateAdminNotes,
+  useExportOrders,
   CompleteOrder,
   OrderFilters as OrderFiltersType,
 } from "@/hooks/use-orders";
@@ -42,6 +45,7 @@ export default function OrdersPage() {
   // Mutation hooks for status and notes updates
   const updateStatusMutation = useUpdateOrderStatus();
   const updateNotesMutation = useUpdateAdminNotes();
+  const exportMutation = useExportOrders();
 
   // Flatten pages into single array
   const orders = data?.pages.flatMap((page) => page.data) ?? [];
@@ -110,11 +114,25 @@ export default function OrdersPage() {
     );
   };
 
+  // Export handler
+  const handleExport = () => {
+    exportMutation.mutate(filters);
+  };
+
   return (
     <div className="container mx-auto py-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-medium tracking-tight">Order</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          disabled={exportMutation.isPending}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          {exportMutation.isPending ? "Mengekspor..." : "Export CSV"}
+        </Button>
       </div>
 
       {/* Error State */}

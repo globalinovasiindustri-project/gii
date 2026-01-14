@@ -95,15 +95,32 @@ export const userService = {
     return result[0] || null;
   },
 
-  // Update user profile (name and phone only)
+  // Update user profile (name, phone, and dateOfBirth)
   updateProfile: async (
     id: string,
-    data: { name?: string; phone?: string | null }
+    data: { name?: string; phone?: string | null; dateOfBirth?: Date | null }
   ): Promise<SelectUser | null> => {
     const result = await db
       .update(users)
       .set({
         ...data,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(users.id, id), eq(users.isDeleted, false)))
+      .returning();
+
+    return result[0] || null;
+  },
+
+  // Update user avatar
+  updateAvatar: async (
+    id: string,
+    avatarUrl: string
+  ): Promise<SelectUser | null> => {
+    const result = await db
+      .update(users)
+      .set({
+        avatar: avatarUrl,
         updatedAt: new Date(),
       })
       .where(and(eq(users.id, id), eq(users.isDeleted, false)))

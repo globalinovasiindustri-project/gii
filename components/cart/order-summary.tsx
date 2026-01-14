@@ -42,8 +42,8 @@ export function OrderSummary({
 
       <div className="border-t pt-3 md:pt-4 mb-3 md:mb-4 hidden lg:block">
         <div className="flex justify-between items-center mb-4 transition-all duration-300">
-          <span className="text-lg font-semibold">Total</span>
-          <span className="text-xl font-bold">
+          <span className="text-lg">Total</span>
+          <span className="text-xl font-medium">
             Rp{totalPrice.toLocaleString("id-ID")}
           </span>
         </div>
@@ -57,8 +57,7 @@ export function OrderSummary({
       >
         {hasItems ? (
           <Link href="/checkout">
-            {isAuthenticated ? "Lanjut ke Checkout" : "Checkout"} ({totalItems}{" "}
-            item)
+            {isAuthenticated ? "Selanjutnya" : "Checkout"} ({totalItems} item)
           </Link>
         ) : (
           <span>Checkout (0 item)</span>

@@ -41,6 +41,8 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   avatar: text("avatar"),
   email: text("email").notNull().unique(),
+  phone: text("phone"),
+  dateOfBirth: timestamp("date_of_birth"),
   role: text("role").notNull().default(roleOptions.USER),
   isConfirmed: boolean("is_confirmed").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),

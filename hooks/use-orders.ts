@@ -99,6 +99,25 @@ const userOrderApi = {
 
 // Admin API functions
 const orderApi = {
+  // Export orders as CSV
+  exportOrders: async (filters: OrderFilters): Promise<Blob> => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== "" && value !== "all") {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await fetch(`/api/admin/orders/export?${params}`, {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Gagal mengekspor data order");
+    }
+
+    return response.blob();
+  },
   // Get all orders with filters
   getOrders: async (
     filters: OrderFiltersWithPagination
@@ -270,5 +289,28 @@ export function useMyOrders(enabled: boolean = true) {
     queryFn: userOrderApi.getMyOrders,
     enabled,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// Hook for exporting orders as CSV
+export function useExportOrders() {
+  return useMutation({
+    mutationFn: (filters: OrderFilters) => orderApi.exportOrders(filters),
+    onSuccess: (blob) => {
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const date = new Date().toISOString().split("T")[0];
+      link.download = `orders-export-${date}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Data order berhasil diekspor");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Gagal mengekspor data order");
+    },
   });
 }

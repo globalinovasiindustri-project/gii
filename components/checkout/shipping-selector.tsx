@@ -54,7 +54,7 @@ export function ShippingSelector({
     return <div className="text-sm text-destructive">{error}</div>;
   }
 
-  if (options.length === 0) {
+  if (options.length === 0 && !disabled) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Truck className="h-4 w-4" />
@@ -67,7 +67,7 @@ export function ShippingSelector({
     <Select
       value={selectedOption ? getOptionKey(selectedOption) : undefined}
       onValueChange={handleValueChange}
-      disabled={disabled}
+      disabled={disabled || options.length === 0}
     >
       <SelectTrigger className="w-full">
         <SelectValue placeholder="Pilih metode pengiriman">

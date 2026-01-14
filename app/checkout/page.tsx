@@ -114,6 +114,10 @@ export default function CheckoutPage() {
             onSuccess: (options) => {
               setShippingOptions(options);
               setShippingError(undefined);
+              // Auto-select first shipping option
+              if (options.length > 0) {
+                setSelectedShippingOption(options[0]);
+              }
             },
             onError: (error) => {
               setShippingError(
@@ -145,6 +149,10 @@ export default function CheckoutPage() {
           onSuccess: (options) => {
             setShippingOptions(options);
             setShippingError(undefined);
+            // Auto-select first shipping option
+            if (options.length > 0) {
+              setSelectedShippingOption(options[0]);
+            }
           },
           onError: (error) => {
             setShippingError(error.message || "Gagal menghitung ongkos kirim");

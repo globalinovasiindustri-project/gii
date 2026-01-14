@@ -166,6 +166,26 @@ const authApi = {
 
     return response.json();
   },
+
+  uploadAvatar: async (file: File): Promise<UpdateProfileResponse> => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const response = await fetch("/api/auth/avatar", {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.message || "Terjadi kesalahan saat mengunggah foto"
+      );
+    }
+
+    return response.json();
+  },
 };
 
 export const useLogin = () => {
@@ -282,6 +302,25 @@ export const useUpdateProfile = () => {
     },
     onError: (error) => {
       // Show error toast (Requirement 4.7)
+      toast.error(error.message);
+    },
+  });
+};
+
+// Hook for uploading avatar
+export const useUploadAvatar = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => authApi.uploadAvatar(file),
+    onSuccess: (data) => {
+      // Invalidate and refetch user data
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+      // Show success toast
+      toast.success(data.message || "Foto profil berhasil diperbarui");
+    },
+    onError: (error) => {
+      // Show error toast
       toast.error(error.message);
     },
   });

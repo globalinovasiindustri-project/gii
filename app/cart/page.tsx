@@ -138,9 +138,11 @@ export default function CartPage() {
   return (
     <>
       <MainNavigation />
-      <div className="container mx-auto px-4 py-4 md:py-8 pb-32 lg:pb-8">
+      <div className="container mx-auto px-4 py-4 md:py-8 pb-32 lg:pb-8 tracking-tight">
         <div className="flex items-center justify-between mb-4 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold">Keranjang Belanja</h1>
+          <h1 className="text-xl font-medium tracking-tight leading-tight md:text-2xl">
+            Keranjang Belanja
+          </h1>
         </div>
 
         {items.length === 0 ? (
@@ -183,7 +185,7 @@ export default function CartPage() {
               )}
 
               {/* Cart Items */}
-              <div className="bg-white border rounded-lg divide-y">
+              <div className=" divide-y">
                 {items.map((item) => (
                   <CartItem
                     key={item.id}

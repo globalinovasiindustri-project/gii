@@ -49,10 +49,11 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const validated = profileFormSchema.parse(body);
 
-    // Update user profile (only name and phone, email is read-only)
+    // Update user profile (name, phone, and dateOfBirth - email is read-only)
     const updatedUser = await userService.updateProfile(userId, {
       name: validated.name,
       phone: validated.phone,
+      dateOfBirth: validated.dateOfBirth || null,
     });
 
     // If user is not found, return not found response

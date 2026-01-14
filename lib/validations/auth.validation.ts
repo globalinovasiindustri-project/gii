@@ -24,8 +24,15 @@ export const profileFormSchema = z.object({
     .or(z.literal(""))
     .optional()
     .transform((val) => val || null),
+  dateOfBirth: z.date().optional().nullable(),
+});
+
+// Email change request schema
+export const emailChangeRequestSchema = z.object({
+  newEmail: z.string().email({ message: "Email tidak valid" }),
 });
 
 export type RegisterFormInput = z.infer<typeof registerSchema>;
 export type LoginFormInput = z.infer<typeof loginSchema>;
 export type ProfileFormSchema = z.infer<typeof profileFormSchema>;
+export type EmailChangeRequestSchema = z.infer<typeof emailChangeRequestSchema>;

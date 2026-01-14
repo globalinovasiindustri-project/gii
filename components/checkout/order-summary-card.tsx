@@ -98,7 +98,7 @@ export function OrderSummaryCard({
             onSelect={onSelectShipping}
             isLoading={isCalculatingShipping}
             error={shippingError}
-            disabled={disabled || isSubmitting}
+            disabled={isSubmitting}
           />
         </div>
       )}
