@@ -7,7 +7,16 @@ import { Plus, Minus, Trash2 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import { VARIANT_TYPES } from "@/lib/enums";
 import type { CartItem as CartItemType } from "@/lib/types/cart.types";
+
+// Helper function to get variant label from value
+const getVariantLabel = (variantValue: string): string => {
+  const variant = Object.values(VARIANT_TYPES).find(
+    (v) => v.value === variantValue
+  );
+  return variant?.label || variantValue;
+};
 
 interface CartItemProps {
   item: CartItemType;
@@ -39,9 +48,9 @@ export function CartItem({
     setLocalQuantity(quantity);
   }, [quantity]);
 
-  // Format variant selections for display
+  // Format variant selections for display with Indonesian labels
   const variantText = Object.entries(variantSelections)
-    .map(([key, value]) => `${key}: ${value}`)
+    .map(([key, value]) => `${getVariantLabel(key)}: ${value}`)
     .join(", ");
 
   // Calculate subtotal

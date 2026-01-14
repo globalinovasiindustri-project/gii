@@ -12,6 +12,7 @@ import {
   formatStatus,
   getStatusVariant,
 } from "@/lib/utils";
+import { VARIANT_TYPES } from "@/lib/enums";
 import type { UserOrder } from "@/hooks/use-orders";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -19,6 +20,26 @@ import "dayjs/locale/id";
 
 dayjs.extend(relativeTime);
 dayjs.locale("id");
+
+// Helper function to get variant label from value
+const getVariantLabel = (variantValue: string): string => {
+  const variant = Object.values(VARIANT_TYPES).find(
+    (v) => v.value === variantValue
+  );
+  return variant?.label || variantValue;
+};
+
+// Format variant selections for display with Indonesian labels
+const formatVariantSelections = (
+  variantSelections: Record<string, string> | null
+): string => {
+  if (!variantSelections || Object.keys(variantSelections).length === 0) {
+    return "";
+  }
+  return Object.entries(variantSelections)
+    .map(([key, value]) => `${getVariantLabel(key)}: ${value}`)
+    .join(", ");
+};
 
 type OrderCardProps = {
   order: UserOrder;
@@ -164,39 +185,46 @@ export function OrderCard({ order, isHighlighted = false }: OrderCardProps) {
             {/* Order Items (Requirement 2.3) */}
             <div className="space-y-3 pt-4">
               <h3 className="font-medium text-sm">Daftar Pesanan</h3>
-              {order.orderItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
-                >
-                  {item.imageUrl && (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.productName}
-                      className="w-16 h-16 object-cover rounded"
-                      width={64}
-                      height={64}
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{item.productName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      SKU: {item.productSku}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Jumlah: {item.quantity}
-                    </p>
+              {order.orderItems.map((item) => {
+                const variantText = formatVariantSelections(
+                  item.variantSelections
+                );
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg"
+                  >
+                    {item.imageUrl && (
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.productName}
+                        className="w-16 h-16 object-cover rounded"
+                        width={64}
+                        height={64}
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{item.productName}</p>
+                      {variantText && (
+                        <p className="text-sm text-muted-foreground">
+                          {variantText}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        Jumlah: {item.quantity}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        {formatCurrency(item.subtotal, order.currency)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatCurrency(item.unitPrice, order.currency)} / item
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">
-                      {formatCurrency(item.subtotal, order.currency)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatCurrency(item.unitPrice, order.currency)} / item
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Shipping Address (Requirement 2.3) */}

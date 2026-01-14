@@ -23,7 +23,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { VARIANT_TYPES } from "@/lib/enums";
 import type { SelectProduct } from "@/lib/db/schema";
+
+// Helper function to get variant label from value
+const getVariantLabel = (variantValue: string): string => {
+  const variant = Object.values(VARIANT_TYPES).find(
+    (v) => v.value === variantValue
+  );
+  return variant?.label || variantValue;
+};
 
 interface VariantOption {
   type: string; // e.g., "Warna", "Kapasitas"
@@ -117,7 +126,7 @@ export function ProductDetails({
           return (
             <div key={group.type} className="space-y-2">
               <p className="text-sm font-medium">
-                {group.type}:{" "}
+                {getVariantLabel(group.type)}:{" "}
                 <span className="font-normal">
                   {selectedVariants[group.type]}
                 </span>
@@ -125,8 +134,8 @@ export function ProductDetails({
               {allOptionsUnavailable ? (
                 <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
                   <p className="text-sm text-amber-800">
-                    Tidak ada opsi {group.type.toLowerCase()} yang tersedia
-                    untuk kombinasi ini
+                    Tidak ada opsi {getVariantLabel(group.type).toLowerCase()}{" "}
+                    yang tersedia untuk kombinasi ini
                   </p>
                 </div>
               ) : (
@@ -183,7 +192,7 @@ export function ProductDetails({
           {stock <= 5 && stock > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-red-600">
-                Hurry, only {stock} items left in stock!
+                Segera habis, hanya tersisa {stock} item!
               </p>
               <Progress
                 value={stockPercentage}
@@ -260,7 +269,7 @@ export function ProductDetails({
           disabled={isAddToCartDisabled}
           size={"lg"}
         >
-          Add to cart
+          Tambah ke Keranjang
         </Button>
       </div>
     </div>

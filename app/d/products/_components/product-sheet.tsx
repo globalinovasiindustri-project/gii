@@ -34,6 +34,14 @@ import { CompleteProduct } from "@/hooks/use-products";
 import { VARIANT_TYPES, PRODUCT_CATEGORIES, PRODUCT_BRANDS } from "@/lib/enums";
 import type { ProductCategory, ProductBrand, VariantType } from "@/lib/enums";
 
+// Helper function to get variant label from value
+const getVariantLabel = (variantValue: VariantType): string => {
+  const variant = Object.values(VARIANT_TYPES).find(
+    (v) => v.value === variantValue
+  );
+  return variant?.label || variantValue;
+};
+
 interface ProductSheetProps {
   isOpen: boolean;
   onClose: () => void;
@@ -219,7 +227,7 @@ function ProductForm({
       category: "smartphones" as ProductCategory,
       brand: "apple" as ProductBrand,
       isActive: true,
-      hasVariants: true,
+      hasVariants: false,
       isHighlighted: false,
       weight: undefined,
       description: undefined,
@@ -281,6 +289,23 @@ function ProductForm({
           });
           return;
         }
+      }
+
+      // If hasVariants is disabled, only submit the first combination and clear variant data
+      if (!data.hasVariants) {
+        const firstCombination = productCombinations[0];
+        data.combinations = [
+          {
+            id: String(firstCombination?.id || "1"),
+            variants: {},
+            sku: firstCombination?.sku || "",
+            name: firstCombination?.name || undefined,
+            price: Number(firstCombination?.price) || 0,
+            stock: Number(firstCombination?.stock) || 0,
+            active: firstCombination?.active ?? true,
+          },
+        ];
+        data.variantTypes = [];
       }
 
       onSave(data);
@@ -369,7 +394,7 @@ function ProductForm({
         category: "smartphones" as ProductCategory,
         brand: "apple" as ProductBrand,
         isActive: true,
-        hasVariants: true,
+        hasVariants: false,
         isHighlighted: false,
         weight: undefined,
         description: undefined,
@@ -544,15 +569,31 @@ function ProductForm({
               <div className="space-y-0.5">
                 <Label htmlFor="hasVariants">Aktifkan Variasi</Label>
                 <p className="text-sm text-muted-foreground">
-                  Aktifkan variasi produk ini
+                  {mode === "edit"
+                    ? "Pengaturan variasi tidak dapat diubah pada mode edit"
+                    : "Aktifkan variasi produk ini"}
                 </p>
               </div>
               <Switch
                 id="hasVariants"
                 checked={!!form.watch("hasVariants")}
-                onCheckedChange={(checked) =>
-                  form.setValue("hasVariants", checked)
-                }
+                onCheckedChange={(checked) => {
+                  form.setValue("hasVariants", checked);
+                  // Clear variants when disabled
+                  if (!checked) {
+                    setSelectedVariants([]);
+                    form.setValue("variantTypes", []);
+                    // Reset combinations to single item without variants
+                    setProductCombinations((prev) => [
+                      {
+                        ...prev[0],
+                        id: prev[0]?.id || 1,
+                        variants: {},
+                      },
+                    ]);
+                  }
+                }}
+                disabled={mode === "edit"}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -592,79 +633,83 @@ function ProductForm({
             )}
           </div>
 
-          {/* Product Variants */}
-          <div className="space-y-6 flex justify-between items-start">
-            <div className="flex flex-col space-y-4">
-              <h3 className="tracking-tight font-medium text-muted-foreground">
-                Varian Produk
-              </h3>
+          {/* Product Variants - Only show when hasVariants is enabled */}
+          {form.watch("hasVariants") && (
+            <div className="space-y-6 flex justify-between items-start">
+              <div className="flex flex-col space-y-4">
+                <h3 className="tracking-tight font-medium text-muted-foreground">
+                  Opsi Varian
+                </h3>
 
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-4">
-                    {Object.values(VARIANT_TYPES).map((variantType) => (
-                      <div
-                        key={variantType.value}
-                        className="flex items-center space-x-2"
-                      >
-                        <input
-                          type="checkbox"
-                          id={`variant-${variantType.value}`}
-                          checked={selectedVariants.includes(variantType.value)}
-                          onChange={(e) => {
-                            const key = variantType.value as VariantType;
-                            if (e.target.checked) {
-                              const next: VariantType[] = [
-                                ...selectedVariants,
-                                key,
-                              ];
-                              setSelectedVariants(next);
-                              form.setValue("variantTypes", next, {
-                                shouldValidate: true,
-                              });
-                            } else {
-                              const next: VariantType[] =
-                                selectedVariants.filter((v) => v !== key);
-                              setSelectedVariants(next);
-                              form.setValue("variantTypes", next, {
-                                shouldValidate: true,
-                              });
-                              // Clear variant values from all combinations when unchecked
-                              setProductCombinations((prev) =>
-                                prev.map((combination) => ({
-                                  ...combination,
-                                  variants: Object.fromEntries(
-                                    Object.entries(combination.variants).filter(
-                                      ([k]) => k !== key
-                                    )
-                                  ),
-                                }))
-                              );
-                            }
-                          }}
-                          className="rounded border-gray-300 size-4"
-                        />
-                        <Label
-                          htmlFor={`variant-${variantType.value}`}
-                          className="capitalize cursor-pointer"
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-4">
+                      {Object.values(VARIANT_TYPES).map((variantType) => (
+                        <div
+                          key={variantType.value}
+                          className="flex items-center space-x-2"
                         >
-                          {variantType.label}
-                        </Label>
-                      </div>
-                    ))}
+                          <input
+                            type="checkbox"
+                            id={`variant-${variantType.value}`}
+                            checked={selectedVariants.includes(
+                              variantType.value
+                            )}
+                            onChange={(e) => {
+                              const key = variantType.value as VariantType;
+                              if (e.target.checked) {
+                                const next: VariantType[] = [
+                                  ...selectedVariants,
+                                  key,
+                                ];
+                                setSelectedVariants(next);
+                                form.setValue("variantTypes", next, {
+                                  shouldValidate: true,
+                                });
+                              } else {
+                                const next: VariantType[] =
+                                  selectedVariants.filter((v) => v !== key);
+                                setSelectedVariants(next);
+                                form.setValue("variantTypes", next, {
+                                  shouldValidate: true,
+                                });
+                                // Clear variant values from all combinations when unchecked
+                                setProductCombinations((prev) =>
+                                  prev.map((combination) => ({
+                                    ...combination,
+                                    variants: Object.fromEntries(
+                                      Object.entries(
+                                        combination.variants
+                                      ).filter(([k]) => k !== key)
+                                    ),
+                                  }))
+                                );
+                              }
+                            }}
+                            className="rounded border-gray-300 size-4"
+                          />
+                          <Label
+                            htmlFor={`variant-${variantType.value}`}
+                            className="capitalize cursor-pointer"
+                          >
+                            {variantType.label}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Pilih variant yang akan digunakan
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Pilih variant yang akan digunakan
-                  </p>
                 </div>
               </div>
-            </div>
 
-            <Button onClick={addProductCombination} size="sm">
-              <Plus className="w-5 h-5" />
-              Tambah Varian
-            </Button>
-          </div>
+              <Button type="button" onClick={addProductCombination} size="sm">
+                <Plus className="w-5 h-5" />
+                Tambah Varian
+              </Button>
+            </div>
+          )}
 
           {/* Product Combinations */}
           <div>
@@ -673,19 +718,24 @@ function ProductForm({
 
             {/* Product combination items */}
             <div className="space-y-4">
-              {productCombinations.map((combination, index) => (
+              {(form.watch("hasVariants")
+                ? productCombinations
+                : productCombinations.slice(0, 1)
+              ).map((combination, index) => (
                 <div
                   key={combination.id}
                   className="p-4 bg-card border rounded-lg shadow-sm space-y-2"
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-muted-foreground">
-                      Varian #{index + 1}
+                      {form.watch("hasVariants")
+                        ? `Varian #${index + 1}`
+                        : "Produk"}
                     </p>
                     <div className="flex space-x-3">
                       <div className="flex items-center space-x-2">
                         <Label className="text-sm font-normal text-muted-foreground">
-                          Visible
+                          Tampilkan
                         </Label>
                         <Switch
                           checked={!!combination.active}
@@ -694,46 +744,52 @@ function ProductForm({
                           }
                         />
                       </div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => removeProductCombination(combination.id)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+                      {form.watch("hasVariants") && mode === "create" && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            removeProductCombination(combination.id)
+                          }
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>{" "}
                   </div>
 
-                  {/* Dynamic variant fields */}
+                  {/* Dynamic variant fields - only show when hasVariants is enabled */}
 
                   <div className="flex gap-4">
-                    {selectedVariants.map((variantType) => (
-                      <div key={variantType} className="space-y-2 w-full">
-                        <Label className="text-sm font-medium capitalize">
-                          {variantType}
-                        </Label>
-                        <Input
-                          placeholder={`Enter ${variantType}`}
-                          className="text-sm"
-                          value={combination.variants[variantType] || ""}
-                          onChange={(e) => {
-                            const newVariants = {
-                              ...combination.variants,
-                              [variantType]: e.target.value,
-                            };
-                            updateCombination(
-                              combination.id,
-                              "variants",
-                              newVariants
-                            );
-                          }}
-                        />
-                      </div>
-                    ))}
+                    {form.watch("hasVariants") &&
+                      selectedVariants.map((variantType) => (
+                        <div key={variantType} className="space-y-2 w-full">
+                          <Label className="text-sm font-medium">
+                            {getVariantLabel(variantType)}
+                          </Label>
+                          <Input
+                            placeholder={`Masukkan ${getVariantLabel(variantType).toLowerCase()}`}
+                            className="text-sm"
+                            value={combination.variants[variantType] || ""}
+                            onChange={(e) => {
+                              const newVariants = {
+                                ...combination.variants,
+                                [variantType]: e.target.value,
+                              };
+                              updateCombination(
+                                combination.id,
+                                "variants",
+                                newVariants
+                              );
+                            }}
+                          />
+                        </div>
+                      ))}
                     <div className="space-y-2 w-full">
                       <Label className="text-sm font-medium">SKU</Label>
                       <Input
-                        placeholder="Nomor sku"
+                        placeholder="Nomor SKU"
                         className="text-sm"
                         value={combination.sku}
                         onChange={(e) =>
@@ -747,7 +803,7 @@ function ProductForm({
                     </div>
 
                     <div className="space-y-2 w-full">
-                      <Label className="text-sm font-medium">Price (IDR)</Label>
+                      <Label className="text-sm font-medium">Harga (IDR)</Label>
                       <Input
                         placeholder="15,000,000"
                         type="number"
@@ -764,7 +820,7 @@ function ProductForm({
                     </div>
 
                     <div className="space-y-2 w-full">
-                      <Label className="text-sm font-medium">Stock</Label>
+                      <Label className="text-sm font-medium">Stok</Label>
                       <Input
                         placeholder="0"
                         type="number"
@@ -796,7 +852,7 @@ function ProductForm({
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Tambahkan informasi tambahan seperti garansi, catatan
-                  pengiriman, dll (Optional)
+                  pengiriman, dll (opsional)
                 </p>
               </div>
               <Button

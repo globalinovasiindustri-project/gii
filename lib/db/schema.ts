@@ -356,6 +356,9 @@ export const orderItems = pgTable(
     productSku: text("product_sku").notNull(),
     imageUrl: text("image_url"),
 
+    // Variant selections snapshot (e.g., {"color": "Black", "storage": "128GB"})
+    variantSelections: text("variant_selections"),
+
     // Pricing snapshot
     quantity: integer("quantity").notNull(),
     unitPrice: integer("unit_price").notNull(), // Price per unit in smallest currency unit

@@ -56,6 +56,7 @@ export interface UserOrderItem {
   unitPrice: number;
   subtotal: number;
   imageUrl: string | null;
+  variantSelections: Record<string, string> | null;
 }
 
 export interface UserOrder {

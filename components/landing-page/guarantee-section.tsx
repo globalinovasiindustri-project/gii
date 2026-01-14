@@ -24,10 +24,10 @@ export function GuaranteeSection() {
         </div>
         <div className="space-y-6">
           <p className="text-base text-foreground/80">
-            Seluruh produk di GII merupakan barang resmi yang didistribusikan
-            langsung oleh mitra terpercaya dan dilengkapi dengan garansi
-            nasional. Dari smartphone, perangkat rumah tangga, hingga gadget
-            terbaru – semua tersedia untuk mendukung gaya hidup Anda.
+            Seluruh produk di BeliElektronik merupakan barang resmi yang
+            didistribusikan langsung oleh mitra terpercaya dan dilengkapi dengan
+            garansi nasional. Dari smartphone, perangkat rumah tangga, hingga
+            gadget terbaru – semua tersedia untuk mendukung gaya hidup Anda.
           </p>
           <p className="text-base text-foreground/80">
             Discover the passion behind our designs and the community we're

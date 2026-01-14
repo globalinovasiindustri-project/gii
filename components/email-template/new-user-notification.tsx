@@ -6,6 +6,7 @@ import {
   Container,
   Text,
   Button,
+  Hr,
 } from "@react-email/components";
 import * as React from "react";
 
@@ -25,138 +26,155 @@ export const NewUserNotification = ({
   return (
     <Html lang="id">
       <Head />
-      <Preview>Akun baru telah dibuat untuk kamu di GII</Preview>
-      <Body
-        style={{
-          backgroundColor: "#f7f7f7",
-          fontFamily:
-            "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif",
-          padding: "20px 0",
-        }}
-      >
-        <Container
-          style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "0px",
-            padding: "24px",
-            maxWidth: "480px",
-          }}
-        >
-          <Text
-            style={{
-              fontSize: "20px",
-              fontWeight: 500,
-              marginBottom: "16px",
-              letterSpacing: "0px",
-              color: "#333",
-            }}
-          >
-            Hai, {name}! 👋
+      <Preview>Akun baru telah dibuat untuk kamu di BeliElektronik</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          {/* Header */}
+          <Text style={logo}>BeliElektronik</Text>
+
+          {/* Content */}
+          <Text style={heading}>Hai, {name}</Text>
+          <Text style={paragraph}>
+            Akun baru telah dibuat untuk kamu di BeliElektronik oleh {createdBy}
+            .
           </Text>
 
-          <Text
-            style={{
-              fontSize: "16px",
-              lineHeight: "24px",
-              marginBottom: "16px",
-              color: "#555",
-            }}
-          >
-            Kami ingin memberitahu kamu bahwa akun baru telah dibuat untuk kamu di platform GII.
-          </Text>
-
-          <Text
-            style={{
-              fontSize: "16px",
-              lineHeight: "24px",
-              marginBottom: "16px",
-              color: "#555",
-            }}
-          >
-            <strong>Detail akun kamu:</strong>
-          </Text>
-
-          <Container
-            style={{
-              backgroundColor: "#f8f9fa",
-              padding: "16px",
-              borderRadius: "8px",
-              marginBottom: "24px",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: "14px",
-                margin: "4px 0",
-                color: "#666",
-              }}
-            >
-              <strong>Email:</strong> {email}
-            </Text>
-            <Text
-              style={{
-                fontSize: "14px",
-                margin: "4px 0",
-                color: "#666",
-              }}
-            >
-              <strong>Dibuat oleh:</strong> {createdBy}
-            </Text>
+          {/* Account Details */}
+          <Container style={detailsBox}>
+            <Text style={detailsLabel}>Email</Text>
+            <Text style={detailsValue}>{email}</Text>
           </Container>
 
-          <Text
-            style={{
-              fontSize: "16px",
-              lineHeight: "24px",
-              marginBottom: "24px",
-              color: "#555",
-            }}
-          >
-            Untuk mengakses akun kamu, silakan klik tombol di bawah ini untuk melakukan verifikasi email dan mengatur kata sandi:
+          <Text style={paragraph}>
+            Klik tombol di bawah untuk verifikasi email dan mulai menggunakan
+            akun kamu.
           </Text>
 
-          <Button
-            href={loginLink}
-            style={{
-              backgroundColor: "#000000",
-              color: "#ffffff",
-              padding: "12px 24px",
-              borderRadius: "6px",
-              textDecoration: "none",
-              fontSize: "16px",
-              fontWeight: 500,
-              display: "inline-block",
-              marginBottom: "24px",
-            }}
-          >
-            Verifikasi & Akses Akun
+          <Button href={loginLink} style={button}>
+            Verifikasi & Masuk
           </Button>
 
-          <Text
-            style={{
-              fontSize: "14px",
-              lineHeight: "20px",
-              color: "#888",
-              marginBottom: "16px",
-            }}
-          >
-            Jika kamu tidak mengharapkan email ini atau merasa ada kesalahan, silakan hubungi administrator kami.
+          <Text style={smallText}>
+            Atau salin link ini ke browser:
+            <br />
+            <a href={loginLink} style={link}>
+              {loginLink}
+            </a>
           </Text>
 
-          <Text
-            style={{
-              fontSize: "12px",
-              lineHeight: "16px",
-              color: "#aaa",
-              marginTop: "32px",
-            }}
-          >
-            Email ini dikirim secara otomatis, mohon jangan membalas email ini.
+          <Hr style={hr} />
+
+          {/* Footer */}
+          <Text style={footer}>
+            Jika kamu tidak mengharapkan email ini, abaikan saja.
+          </Text>
+
+          <Text style={footerBrand}>
+            © {new Date().getFullYear()} Global Inovasi Industri
           </Text>
         </Container>
       </Body>
     </Html>
   );
+};
+
+// Styles
+const main = {
+  backgroundColor: "#f4f4f5",
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  padding: "40px 20px",
+};
+
+const container = {
+  backgroundColor: "#ffffff",
+  padding: "40px",
+  maxWidth: "480px",
+  margin: "0 auto",
+};
+
+const logo = {
+  fontSize: "24px",
+  fontWeight: "700" as const,
+  color: "#18181b",
+  margin: "0 0 32px 0",
+  letterSpacing: "-0.5px",
+};
+
+const heading = {
+  fontSize: "20px",
+  fontWeight: "600" as const,
+  color: "#18181b",
+  margin: "0 0 8px 0",
+};
+
+const paragraph = {
+  fontSize: "15px",
+  color: "#52525b",
+  lineHeight: "24px",
+  margin: "0 0 24px 0",
+};
+
+const detailsBox = {
+  backgroundColor: "#f4f4f5",
+  padding: "16px",
+  margin: "0 0 24px 0",
+};
+
+const detailsLabel = {
+  fontSize: "12px",
+  color: "#71717a",
+  margin: "0 0 4px 0",
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.5px",
+};
+
+const detailsValue = {
+  fontSize: "15px",
+  color: "#18181b",
+  margin: "0",
+  fontWeight: "500" as const,
+};
+
+const button = {
+  backgroundColor: "#18181b",
+  color: "#ffffff",
+  padding: "14px 24px",
+  fontSize: "14px",
+  fontWeight: "500" as const,
+  textDecoration: "none",
+  display: "inline-block",
+};
+
+const smallText = {
+  fontSize: "13px",
+  color: "#71717a",
+  lineHeight: "20px",
+  margin: "24px 0 0 0",
+};
+
+const link = {
+  color: "#2563eb",
+  textDecoration: "none",
+  wordBreak: "break-all" as const,
+};
+
+const hr = {
+  borderColor: "#e4e4e7",
+  margin: "32px 0",
+};
+
+const footer = {
+  fontSize: "12px",
+  color: "#a1a1aa",
+  lineHeight: "18px",
+  margin: "0 0 16px 0",
+};
+
+const footerBrand = {
+  fontSize: "12px",
+  color: "#a1a1aa",
+  margin: "0",
 };
 
 export default NewUserNotification;

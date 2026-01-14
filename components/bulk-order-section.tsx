@@ -187,85 +187,157 @@ export function BulkOrderSection() {
               const product = getProduct(item.productId);
 
               return (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-2 rounded-lg bg-background p-3"
-                >
-                  <span className="w-6 shrink-0 text-center text-sm text-muted-foreground">
-                    {index + 1}.
-                  </span>
+                <div key={item.id} className="rounded-lg bg-background p-3">
+                  {/* Mobile: Stack layout */}
+                  <div className="flex flex-col gap-2 md:hidden">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Produk {index + 1}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeItem(item.id)}
+                        disabled={items.length === 1}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive disabled:opacity-30"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                    <Select
+                      value={item.productId}
+                      onValueChange={(value) =>
+                        updateItem(item.id, "productId", value)
+                      }
+                    >
+                      <SelectTrigger className="h-9 w-full">
+                        <SelectValue placeholder="Pilih produk" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MOCK_PRODUCTS.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.brand} - {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex gap-2">
+                      <Select
+                        value={item.variantId}
+                        onValueChange={(value) =>
+                          updateItem(item.id, "variantId", value)
+                        }
+                        disabled={!item.productId}
+                      >
+                        <SelectTrigger className="h-9 flex-1">
+                          <SelectValue placeholder="Variant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {product?.variants.map((v) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              {v.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={item.quantity}
+                        onValueChange={(value) =>
+                          updateItem(item.id, "quantity", value)
+                        }
+                      >
+                        <SelectTrigger className="h-9 w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {QUANTITY_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-                  <Select
-                    value={item.productId}
-                    onValueChange={(value) =>
-                      updateItem(item.id, "productId", value)
-                    }
-                  >
-                    <SelectTrigger className="h-9 flex-1">
-                      <SelectValue placeholder="Pilih produk" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MOCK_PRODUCTS.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.brand} - {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {/* Desktop: Row layout */}
+                  <div className="hidden items-center gap-2 md:flex">
+                    <span className="w-6 shrink-0 text-center text-sm text-muted-foreground">
+                      {index + 1}.
+                    </span>
 
-                  <Select
-                    value={item.variantId}
-                    onValueChange={(value) =>
-                      updateItem(item.id, "variantId", value)
-                    }
-                    disabled={!item.productId}
-                  >
-                    <SelectTrigger className="h-9 w-36">
-                      <SelectValue placeholder="Variant" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {product?.variants.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {v.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Select
+                      value={item.productId}
+                      onValueChange={(value) =>
+                        updateItem(item.id, "productId", value)
+                      }
+                    >
+                      <SelectTrigger className="h-9 flex-1">
+                        <SelectValue placeholder="Pilih produk" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MOCK_PRODUCTS.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.brand} - {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-                  <Select
-                    value={item.quantity}
-                    onValueChange={(value) =>
-                      updateItem(item.id, "quantity", value)
-                    }
-                  >
-                    <SelectTrigger className="h-9 w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {QUANTITY_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Select
+                      value={item.variantId}
+                      onValueChange={(value) =>
+                        updateItem(item.id, "variantId", value)
+                      }
+                      disabled={!item.productId}
+                    >
+                      <SelectTrigger className="h-9 w-36">
+                        <SelectValue placeholder="Variant" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {product?.variants.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>
+                            {v.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeItem(item.id)}
-                    disabled={items.length === 1}
-                    className="h-9 w-9 shrink-0 p-0 text-muted-foreground hover:text-destructive disabled:opacity-30"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+                    <Select
+                      value={item.quantity}
+                      onValueChange={(value) =>
+                        updateItem(item.id, "quantity", value)
+                      }
+                    >
+                      <SelectTrigger className="h-9 w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {QUANTITY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeItem(item.id)}
+                      disabled={items.length === 1}
+                      className="h-9 w-9 shrink-0 p-0 text-muted-foreground hover:text-destructive disabled:opacity-30"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-4 flex shrink-0 gap-3">
+          <div className="mt-4 flex shrink-0 flex-col gap-3 sm:flex-row">
             <Button
               variant="outline"
               onClick={addItem}

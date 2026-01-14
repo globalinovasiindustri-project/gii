@@ -37,11 +37,9 @@ export type VariantSchema = z.infer<typeof variantSchema>;
 
 // ====== Kombinasi produk (produk aktual) ======
 // UI menyimpan varian sebagai object { [variantType]: value }
+// Validasi value dilakukan di superRefine berdasarkan hasVariants
 const combinationVariantsSchema = z
-  .record(
-    z.string(),
-    z.string().min(1, { message: "Nilai varian harus diisi" })
-  )
+  .record(z.string(), z.string())
   .refine(
     (obj) =>
       Object.keys(obj).every((k) =>
@@ -152,33 +150,25 @@ export const productSchema = z
         });
       }
 
-      // Setiap kombinasi harus mengandung semua tipe varian yang dipilih
+      // Setiap kombinasi harus mengandung semua tipe varian yang dipilih dengan nilai non-empty
       data.combinations.forEach((combination, idx) => {
-        const keys = Object.keys(combination.variants);
+        const variants = combination.variants;
         const required = data.variantTypes;
-        const hasAllRequired = required.every((t) => keys.includes(t));
-        if (!hasAllRequired) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["combinations", idx, "variants"],
-            message:
-              "Semua tipe varian yang dipilih harus diisi pada kombinasi",
-          });
-        }
-      });
-    } else {
-      // Jika tidak memakai varian, kombinasi tidak boleh punya key varian
-      data.combinations.forEach((combination, idx) => {
-        if (Object.keys(combination.variants).length > 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["combinations", idx, "variants"],
-            message:
-              "Kombinasi tidak boleh memiliki varian saat varian dinonaktifkan",
-          });
-        }
+
+        required.forEach((variantType) => {
+          const value = variants[variantType];
+          if (!value || value.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["combinations", idx, "variants"],
+              message: `Nilai varian "${variantType}" harus diisi pada kombinasi`,
+            });
+          }
+        });
       });
     }
+    // Jika tidak memakai varian, variants boleh kosong atau diabaikan
+    // Tidak perlu validasi karena akan di-clear saat submit
   });
 
 export type ProductSchema = z.infer<typeof productSchema>;

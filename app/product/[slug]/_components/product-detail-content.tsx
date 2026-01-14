@@ -144,11 +144,17 @@ export function ProductDetailContent({
 
   // Update selected product when variants change
   useEffect(() => {
-    if (
-      Object.keys(selectedVariants).length > 0 &&
-      validCombinations !== null
-    ) {
-      findMatchingProduct(selectedVariants);
+    if (validCombinations !== null) {
+      // For products without variants, selectedVariants will be empty
+      // For products with variants, we need all variants selected
+      const hasVariants = validCombinations.variantTypes.length > 0;
+      const allVariantsSelected =
+        Object.keys(selectedVariants).length >=
+        validCombinations.variantTypes.length;
+
+      if (!hasVariants || allVariantsSelected) {
+        findMatchingProduct(selectedVariants);
+      }
     }
   }, [selectedVariants, validCombinations]);
 
@@ -185,19 +191,21 @@ export function ProductDetailContent({
   const handleAddToCart = () => {
     // Validation: Check if product is selected
     if (!selectedProduct) {
-      toast.error("Silakan pilih varian produk");
+      toast.error("Produk tidak tersedia");
       return;
     }
 
-    // Validation: Check if all required variants are selected
+    // Validation: Check if all required variants are selected (only for products with variants)
     const variantGroups = getVariantGroups();
-    const allVariantsSelected = variantGroups.every(
-      (group) => selectedVariants[group.type]
-    );
+    if (variantGroups.length > 0) {
+      const allVariantsSelected = variantGroups.every(
+        (group) => selectedVariants[group.type]
+      );
 
-    if (!allVariantsSelected) {
-      toast.error("Silakan pilih semua varian produk");
-      return;
+      if (!allVariantsSelected) {
+        toast.error("Silakan pilih semua varian produk");
+        return;
+      }
     }
 
     // Validation: Check if product is in stock

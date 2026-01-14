@@ -24,7 +24,13 @@ export async function GET(request: NextRequest) {
     // Transform the response to match frontend expectations
     const formattedOrders = completeOrders.map((completeOrder) => ({
       ...completeOrder.order,
-      orderItems: completeOrder.orderItems.map((item) => item.orderItem),
+      orderItems: completeOrder.orderItems.map((item) => ({
+        ...item.orderItem,
+        // Parse variantSelections from JSON string
+        variantSelections: item.orderItem.variantSelections
+          ? JSON.parse(item.orderItem.variantSelections)
+          : null,
+      })),
     }));
 
     return NextResponse.json(

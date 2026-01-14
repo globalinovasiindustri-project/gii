@@ -64,6 +64,13 @@
       "when": 1768416908038,
       "tag": "0008_curly_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1768419828061,
+      "tag": "0009_add_variant_selections_to_order_items",
+      "breakpoints": true
     }
   ]
 }

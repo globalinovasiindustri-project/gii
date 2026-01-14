@@ -4,6 +4,7 @@ import { MagicLink } from "@/components/email-template/magic-link";
 import { NewUserNotification } from "@/components/email-template/new-user-notification";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL = "BeliElektronik <noreply@belielektronik.com>";
 
 export const emailService = {
   sendConfirmationEmail: async ({
@@ -17,10 +18,9 @@ export const emailService = {
   }) => {
     try {
       const { data, error } = await resend.emails.send({
-        from: "onboarding@resend.dev",
-        // to: [to],
-        to: "hanifyaskur2@gmail.com",
-        subject: "Konfirmasi Email - GII",
+        from: FROM_EMAIL,
+        to: [to],
+        subject: "Konfirmasi Email - BeliElektronik",
         react: EmailConfirmation({
           name,
           confirmationLink,
@@ -63,10 +63,9 @@ export const emailService = {
   }) => {
     try {
       const { data, error } = await resend.emails.send({
-        from: "onboarding@resend.dev",
-        // to: [to],
-        to: "hanifyaskur2@gmail.com",
-        subject: "Magic Link Login - GII",
+        from: FROM_EMAIL,
+        to: [to],
+        subject: "Login ke BeliElektronik",
         react: MagicLink({
           name,
           magicLink,
@@ -113,10 +112,9 @@ export const emailService = {
   }) => {
     try {
       const { data, error } = await resend.emails.send({
-        from: "onboarding@resend.dev",
-        // to: [to],
-        to: "hanifyaskur2@gmail.com",
-        subject: "Akun Baru Telah Dibuat - GII",
+        from: FROM_EMAIL,
+        to: [to],
+        subject: "Akun Baru Telah Dibuat - BeliElektronik",
         react: NewUserNotification({
           name,
           email,
@@ -144,7 +142,8 @@ export const emailService = {
       console.error("New user notification email service error:", error);
       return {
         success: false,
-        message: "Terjadi kesalahan saat mengirim email notifikasi pengguna baru",
+        message:
+          "Terjadi kesalahan saat mengirim email notifikasi pengguna baru",
         data: null,
       };
     }

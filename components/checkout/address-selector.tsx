@@ -126,15 +126,15 @@ export function AddressSelector({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 tracking-tight">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Pilih Alamat Pengiriman</h3>
+        <h3 className="text-lg font-medium">Pilih Alamat Pengiriman</h3>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setShowAddDialog(true)}
         >
-          Tambah Alamat Baru
+          Tambah Alamat
         </Button>
       </div>
 
