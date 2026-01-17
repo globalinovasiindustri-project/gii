@@ -868,7 +868,7 @@ function ProductForm({
 
             {additionalDescriptions.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-muted/50">
-                <FileText className="w-12 h-12 text-muted-foreground mb-3" />
+                <FileText className="size-5 text-muted-foreground mb-3" />
                 <p className="text-sm font-medium text-center mb-1">
                   Belum ada deskripsi tambahan
                 </p>

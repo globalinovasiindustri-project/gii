@@ -1,6 +1,7 @@
 import { db } from "@/lib/db/db";
-import { users, SelectUser, InsertUser } from "@/lib/db/schema";
+import { users, verifyCodes, SelectUser, InsertUser } from "@/lib/db/schema";
 import { eq, and, or, ilike, desc, count } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { emailService } from "./email.service";
 
 export interface GetUsersParams {
@@ -180,13 +181,31 @@ export const userService = {
         })
         .returning();
 
+      // Generate verification code (same as auth.service.ts)
+      const verificationCode = nanoid(32);
+
+      // Set expiration time (24 hours from now)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      // Insert verification code to database
+      await db.insert(verifyCodes).values({
+        userId: newUser.id,
+        verifyType: "register",
+        code: verificationCode,
+        expiresAt: expiresAt,
+      });
+
+      // Generate proper verification link
+      const loginLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?code=${verificationCode}&type=register`;
+
       // Send notification email to the new user
       const emailResult = await emailService.sendNewUserNotification({
         to: newUser.email,
         name: newUser.name,
         email: newUser.email,
         createdBy: "Administrator",
-        loginLink: `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?email=${encodeURIComponent(newUser.email)}`,
+        loginLink,
       });
 
       if (!emailResult.success) {

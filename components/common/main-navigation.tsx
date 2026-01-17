@@ -33,7 +33,7 @@ export function MainNavigation() {
       {/* Left: Logo + Menu */}
       <div className="flex items-center space-x-12">
         <Link href="/">
-          <Image src="/logo.png" width={100} height={40} alt="logo" />
+          <Image src="/logo.png" width={160} height={40} alt="logo" />
         </Link>
 
         <ul className="hidden items-center space-x-10 md:flex">

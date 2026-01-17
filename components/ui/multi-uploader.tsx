@@ -167,11 +167,11 @@ export function MultiUploader({ images, onImagesChange }: MultiUploaderProps) {
           </div>
           <DropZoneArea>
             <DropzoneTrigger className="flex flex-col items-center gap-4 bg-transparent p-10 text-center text-sm">
-              <CloudUploadIcon className="size-8" />
+              <CloudUploadIcon className="size-5" />
               <div>
-                <p className="font-medium">Upload listing images</p>
+                <p className="font-medium">Upload gambar produk</p>
                 <p className="text-sm text-muted-foreground">
-                  Click here or drag and drop to upload
+                  Klik di sini atau tarik gambar untuk mengunggah
                 </p>
               </div>
             </DropzoneTrigger>

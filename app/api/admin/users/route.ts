@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userService } from "@/lib/services/user.service";
 import { UserFilters } from "@/hooks/use-users";
-import { decodeUserRole } from "@/lib/utils/token.utils";
-import { formatErrorResponse } from "@/lib/errors";
+import { decodeUserRole, decodeUserId } from "@/lib/utils/token.utils";
+import { formatErrorResponse, AuthorizationError } from "@/lib/errors";
+import { userSchema } from "@/lib/validations/user.validation";
 
 // ==================== Request Parsers ====================
 function parseUserFilters(searchParams: URLSearchParams): UserFilters {
@@ -20,7 +21,7 @@ function parseUserFilters(searchParams: URLSearchParams): UserFilters {
   };
 }
 
-// ==================== Route Handler ====================
+// ==================== Route Handlers ====================
 export async function GET(request: NextRequest) {
   try {
     const viewerRole = decodeUserRole(request);
@@ -41,6 +42,48 @@ export async function GET(request: NextRequest) {
         data: result,
       },
       { status: 200 }
+    );
+  } catch (error) {
+    const { response, statusCode } = formatErrorResponse(error);
+    return NextResponse.json(response, { status: statusCode });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // 1. Auth check - only admins can create users
+    const userId = decodeUserId(request);
+    if (!userId) throw new AuthorizationError("Unauthorized");
+
+    const userRole = decodeUserRole(request);
+    if (userRole !== "admin" && userRole !== "super_admin") {
+      throw new AuthorizationError("Only admins can create users");
+    }
+
+    // 2. Validate input
+    const body = await request.json();
+    const validated = userSchema.parse(body);
+
+    // 3. Delegate to service
+    const result = await userService.createUser(validated);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: result.message,
+        },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: result.message,
+        data: result.user,
+      },
+      { status: 201 }
     );
   } catch (error) {
     const { response, statusCode } = formatErrorResponse(error);
