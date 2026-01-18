@@ -30,6 +30,14 @@ async function verifyTokenAsync(token: string, req: NextRequest) {
   try {
     const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
+
+    // Check if user has admin role
+    const role = payload.role as string | undefined;
+    if (!role || !["admin", "super_admin"].includes(role)) {
+      // User is authenticated but not an admin
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
     return NextResponse.next();
   } catch (error) {
     // Token is invalid, redirect to auth

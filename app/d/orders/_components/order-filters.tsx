@@ -50,14 +50,15 @@ export function OrderFilters({
         onValueChange={onOrderStatusFilterChange}
       >
         <SelectTrigger className="max-w-[240px]">
-          <SelectValue placeholder="Filter by order status" />
+          <SelectValue placeholder="Filter status order" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Orders</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="shipped">Shipped</SelectItem>
-          <SelectItem value="delivered">Delivered</SelectItem>
-          <SelectItem value="cancelled">Cancelled</SelectItem>
+          <SelectItem value="all">Semua Order</SelectItem>
+          <SelectItem value="pending">Menunggu</SelectItem>
+          <SelectItem value="processing">Diproses</SelectItem>
+          <SelectItem value="shipped">Dikirim</SelectItem>
+          <SelectItem value="delivered">Selesai</SelectItem>
+          <SelectItem value="cancelled">Dibatalkan</SelectItem>
         </SelectContent>
       </Select>
 
@@ -66,14 +67,14 @@ export function OrderFilters({
         onValueChange={onPaymentStatusFilterChange}
       >
         <SelectTrigger className="max-w-[240px]">
-          <SelectValue placeholder="Filter by payment status" />
+          <SelectValue placeholder="Filter status pembayaran" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Payments</SelectItem>
-          <SelectItem value="pending">Unpaid</SelectItem>
-          <SelectItem value="paid">Paid</SelectItem>
-          <SelectItem value="failed">Failed</SelectItem>
-          <SelectItem value="refunded">Refunded</SelectItem>
+          <SelectItem value="all">Semua Pembayaran</SelectItem>
+          <SelectItem value="unpaid">Belum Dibayar</SelectItem>
+          <SelectItem value="paid">Lunas</SelectItem>
+          <SelectItem value="failed">Gagal</SelectItem>
+          <SelectItem value="refunded">Dikembalikan</SelectItem>
         </SelectContent>
       </Select>
     </div>

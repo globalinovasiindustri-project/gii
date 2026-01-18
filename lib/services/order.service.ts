@@ -82,6 +82,7 @@ export interface CreateOrderResult {
   orderId: string;
   orderNumber: string;
   userId: string; // Newly created user ID
+  paymentUrl?: string; // Midtrans redirect URL
 }
 
 export interface CreateAuthenticatedOrderInput {
@@ -97,6 +98,7 @@ export interface CreateAuthenticatedOrderInput {
 export interface CreateAuthenticatedOrderResult {
   orderId: string;
   orderNumber: string;
+  paymentUrl?: string; // Midtrans redirect URL
 }
 
 // === Query Filter Builders ===
@@ -371,8 +373,8 @@ export const orderService = {
           subtotal,
           shippingCost,
           total,
-          orderStatus: "processing",
-          paymentStatus: "paid", // Auto-paid for MVP
+          orderStatus: "pending",
+          paymentStatus: "pending", // Pending until Midtrans confirms
           currency: "IDR",
           customerNotes: input.notes,
           // Store shipping selection details
@@ -524,8 +526,8 @@ export const orderService = {
           subtotal,
           shippingCost,
           total,
-          orderStatus: "processing",
-          paymentStatus: "paid", // Auto-paid for MVP
+          orderStatus: "pending",
+          paymentStatus: "pending", // Pending until Midtrans confirms
           currency: "IDR",
           // Store shipping selection details
           carrier: input.selectedCourier
@@ -571,6 +573,7 @@ export const orderService = {
    * Update order status with timestamp management
    * Handles status transitions and clears/sets timestamps appropriately:
    * - pending: clears all progression timestamps (shippedAt, deliveredAt, cancelledAt)
+   * - processing: clears progression timestamps, order is being prepared
    * - shipped: sets shippedAt, clears deliveredAt and cancelledAt
    * - delivered: sets deliveredAt, clears cancelledAt
    * - cancelled: sets cancelledAt
@@ -613,6 +616,14 @@ export const orderService = {
     switch (data.orderStatus) {
       case "pending":
         // Clear all progression timestamps when rolling back to pending
+        updateData.shippedAt = null;
+        updateData.deliveredAt = null;
+        updateData.cancelledAt = null;
+        updateData.cancellationReason = null;
+        break;
+
+      case "processing":
+        // Clear progression timestamps but keep order active
         updateData.shippedAt = null;
         updateData.deliveredAt = null;
         updateData.cancelledAt = null;

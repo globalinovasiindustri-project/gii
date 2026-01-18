@@ -136,7 +136,7 @@ async function main() {
     });
   }
 
-  console.log(`Created order ${order1Number} (Delivered)`);
+  console.log(`Pesanan dibuat: ${order1Number} (Selesai)`);
 
   // Create Order 2: Shipped order
   const order2Number = generateOrderNumber();
@@ -190,7 +190,7 @@ async function main() {
     });
   }
 
-  console.log(`Created order ${order2Number} (Shipped)`);
+  console.log(`Pesanan dibuat: ${order2Number} (Dikirim)`);
 
   // Create Order 3: Processing order with discount
   const order3Number = generateOrderNumber();
@@ -243,7 +243,7 @@ async function main() {
     });
   }
 
-  console.log(`Created order ${order3Number} (Processing with discount)`);
+  console.log(`Pesanan dibuat: ${order3Number} (Diproses dengan diskon)`);
 
   // Create Order 4: Pending payment
   const order4Number = generateOrderNumber();
@@ -272,7 +272,7 @@ async function main() {
       total: order4Total,
       currency: "IDR",
       orderStatus: orderStatusOptions.PROCESSING,
-      paymentStatus: paymentStatusOptions.PENDING,
+      paymentStatus: paymentStatusOptions.UNPAID,
       paymentMethod: "stripe",
       createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
     })
@@ -291,7 +291,7 @@ async function main() {
     });
   }
 
-  console.log(`Created order ${order4Number} (Pending payment)`);
+  console.log(`Pesanan dibuat: ${order4Number} (Belum dibayar)`);
 
   // Create Order 5: Cancelled order
   const order5Number = generateOrderNumber();
@@ -340,11 +340,13 @@ async function main() {
     });
   }
 
-  console.log(`Created order ${order5Number} (Cancelled)`);
+  console.log(`Pesanan dibuat: ${order5Number} (Dibatalkan)`);
 
-  console.log("\n✅ Seed completed: 5 orders with various statuses created");
   console.log(
-    "Order statuses: Delivered, Shipped, Processing, Pending, Cancelled"
+    "\n✅ Seed selesai: 5 pesanan dengan berbagai status telah dibuat"
+  );
+  console.log(
+    "Status pesanan: Selesai, Dikirim, Diproses, Belum Dibayar, Dibatalkan"
   );
 }
 

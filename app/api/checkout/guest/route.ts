@@ -4,6 +4,9 @@ import { cartService } from "@/lib/services/cart.service";
 import { getSessionId } from "@/lib/utils/session.utils";
 import { formatErrorResponse, ValidationError } from "@/lib/errors";
 import { guestCheckoutWithShippingSchema } from "@/lib/validations/checkout.validation";
+import { db } from "@/lib/db/db";
+import { orders } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 
 /**
@@ -72,7 +75,7 @@ export async function POST(request: NextRequest) {
 
       throw new ValidationError(
         `Validasi keranjang gagal: ${errorMessages.join(", ")}`,
-        { errors: validation.errors }
+        { errors: validation.errors },
       );
     }
 
@@ -101,6 +104,60 @@ export async function POST(request: NextRequest) {
       sessionId,
     });
 
+    // Generate Midtrans payment token
+    const { paymentService } = await import("@/lib/services/payment.service");
+
+    const nameParts = validated.fullName.split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    const itemDetails = cartItems.map((item) => ({
+      id: item.productId,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    }));
+
+    // Add shipping as item
+    const shippingCost = validated.shippingCost ?? 15000;
+    if (shippingCost > 0) {
+      itemDetails.push({
+        id: "shipping",
+        name: "Ongkos Kirim",
+        price: shippingCost,
+        quantity: 1,
+      });
+    }
+
+    const subtotal = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+    const total = subtotal + shippingCost;
+
+    const paymentToken = await paymentService.createSnapToken({
+      orderId: result.orderId,
+      orderNumber: result.orderNumber,
+      grossAmount: total,
+      customerDetails: {
+        firstName,
+        lastName,
+        email: validated.email,
+        phone: validated.phone,
+      },
+      itemDetails,
+    });
+
+    // Store Midtrans order ID and Snap token in order for payment retry support
+    await db
+      .update(orders)
+      .set({
+        midtransOrderId: paymentToken.midtransOrderId,
+        snapToken: paymentToken.token,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, result.orderId));
+
     // Generate auth token for new user
     const token = jwt.sign(
       {
@@ -113,10 +170,10 @@ export async function POST(request: NextRequest) {
       process.env.JWT_SECRET!,
       {
         expiresIn: "30d",
-      }
+      },
     );
 
-    // Create response with order data
+    // Create response with order data and payment URL
     const response = NextResponse.json(
       {
         success: true,
@@ -124,9 +181,11 @@ export async function POST(request: NextRequest) {
         data: {
           orderId: result.orderId,
           orderNumber: result.orderNumber,
+          paymentUrl: paymentToken.redirectUrl,
+          snapToken: paymentToken.token,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
 
     // Set HTTP-only auth cookie

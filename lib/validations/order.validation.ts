@@ -3,6 +3,7 @@ import { z } from "zod";
 // Order status values aligned with database schema
 export const ORDER_STATUS = {
   PENDING: "pending",
+  PROCESSING: "processing",
   SHIPPED: "shipped",
   DELIVERED: "delivered",
   CANCELLED: "cancelled",
@@ -12,6 +13,7 @@ export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
 
 const ORDER_STATUS_VALUES = [
   ORDER_STATUS.PENDING,
+  ORDER_STATUS.PROCESSING,
   ORDER_STATUS.SHIPPED,
   ORDER_STATUS.DELIVERED,
   ORDER_STATUS.CANCELLED,

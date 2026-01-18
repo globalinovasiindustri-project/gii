@@ -2,18 +2,19 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, CreditCard, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatCurrency, formatDateTime, getStatusVariant } from "@/lib/utils";
 import {
-  formatCurrency,
-  formatDateTime,
-  formatStatus,
-  getStatusVariant,
-} from "@/lib/utils";
+  formatOrderStatus,
+  formatPaymentStatus,
+} from "@/lib/utils/status.utils";
 import { VARIANT_TYPES } from "@/lib/enums";
 import type { UserOrder } from "@/hooks/use-orders";
+import { useRetryPayment } from "@/hooks/use-orders";
+import { toast } from "sonner";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/id";
@@ -74,6 +75,15 @@ function parseAddress(addressJson: string): {
 export function OrderCard({ order, isHighlighted = false }: OrderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const retryPayment = useRetryPayment();
+
+  // Check if order can be paid (pending/failed payment, not cancelled)
+  const canRetryPayment =
+    (order.paymentStatus === "pending" || order.paymentStatus === "failed") &&
+    order.orderStatus !== "cancelled";
+
+  // Check if we have a stored snap token (for continue payment)
+  const hasStoredToken = !!order.snapToken;
 
   // Scroll to highlighted order on mount
   useEffect(() => {
@@ -86,6 +96,42 @@ export function OrderCard({ order, isHighlighted = false }: OrderCardProps) {
       }, 100);
     }
   }, [isHighlighted]);
+
+  // Continue payment with existing token
+  const handleContinuePayment = () => {
+    if (!order.snapToken) {
+      toast.error("Token pembayaran tidak ditemukan");
+      return;
+    }
+
+    // Check if snap.js is loaded
+    if (typeof window !== "undefined" && (window as any).snap) {
+      (window as any).snap.pay(order.snapToken, {
+        onSuccess: function () {
+          toast.success("Pembayaran berhasil!");
+          window.location.href = "/user/orders";
+        },
+        onPending: function () {
+          toast.info("Menunggu pembayaran...");
+          window.location.href = "/user/orders";
+        },
+        onError: function () {
+          toast.error("Pembayaran gagal");
+        },
+        onClose: function () {
+          // User closed the popup
+        },
+      });
+    } else {
+      // Fallback: redirect to payment URL
+      toast.error("Snap.js belum dimuat. Silakan muat ulang halaman.");
+    }
+  };
+
+  // Change payment method (generate new token)
+  const handleChangePaymentMethod = () => {
+    retryPayment.mutate(order.id);
+  };
 
   return (
     <Card
@@ -102,11 +148,11 @@ export function OrderCard({ order, isHighlighted = false }: OrderCardProps) {
             <div className="flex flex-wrap gap-2 justify-end">
               {/* Order status badge (Requirement 2.2) */}
               <Badge variant={getStatusVariant(order.orderStatus)}>
-                {formatStatus(order.orderStatus)}
+                {formatOrderStatus(order.orderStatus)}
               </Badge>
               {/* Payment status badge (Requirement 2.2) */}
               <Badge variant={getStatusVariant(order.paymentStatus)}>
-                {formatStatus(order.paymentStatus)}
+                {formatPaymentStatus(order.paymentStatus)}
               </Badge>
             </div>
           </div>
@@ -166,19 +212,54 @@ export function OrderCard({ order, isHighlighted = false }: OrderCardProps) {
         )}
 
         {/* Expandable details section (Requirement 2.3) */}
-        <Button
-          variant="secondary"
-          size="sm"
-          className=""
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <span>{isExpanded ? "Sembunyikan Detail" : "Lihat Detail"}</span>
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
+        <div className="flex flex-col gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            <span>{isExpanded ? "Sembunyikan Detail" : "Lihat Detail"}</span>
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+
+          {/* Payment action buttons for unpaid orders */}
+          {canRetryPayment && (
+            <div className="flex gap-2">
+              {/* Continue payment with existing token */}
+              {hasStoredToken && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleContinuePayment}
+                  className="flex-1"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>Lanjutkan Pembayaran</span>
+                </Button>
+              )}
+
+              {/* Change payment method (generate new token) */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleChangePaymentMethod}
+                disabled={retryPayment.isPending}
+                className="flex-1"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>
+                  {retryPayment.isPending
+                    ? "Memproses..."
+                    : "Ganti Metode Pembayaran"}
+                </span>
+              </Button>
+            </div>
           )}
-        </Button>
+        </div>
 
         {isExpanded && (
           <div className="mt-4 border-t border-dashed space-y-4">

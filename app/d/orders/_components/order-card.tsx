@@ -21,32 +21,14 @@ import {
 } from "@/components/ui/tooltip";
 import { CompleteOrder } from "@/hooks/use-orders";
 import { formatCurrency, cn } from "@/lib/utils";
+import {
+  formatOrderStatus,
+  formatPaymentStatus,
+} from "@/lib/utils/status.utils";
 
 interface OrderCardProps {
   order: CompleteOrder;
   onClick: (order: CompleteOrder) => void;
-}
-
-// Format payment status dengan "Unpaid" untuk pending
-function formatPaymentStatus(status: string): string {
-  const statusMap: Record<string, string> = {
-    pending: "Unpaid",
-    paid: "Paid",
-    failed: "Failed",
-    refunded: "Refunded",
-  };
-  return statusMap[status] || status;
-}
-
-// Format order status
-function formatOrderStatus(status: string): string {
-  const statusMap: Record<string, string> = {
-    pending: "Pending",
-    shipped: "Shipped",
-    delivered: "Delivered",
-    cancelled: "Cancelled",
-  };
-  return statusMap[status] || status;
 }
 
 // Get icon dan warna untuk payment status
@@ -54,7 +36,7 @@ function getPaymentStatusIcon(status: string) {
   switch (status) {
     case "paid":
       return { icon: HandCoins, color: "text-green-500", bg: "bg-green-50" };
-    case "pending":
+    case "unpaid":
       return { icon: HandCoins, color: "text-amber-500", bg: "bg-amber-50" };
     case "failed":
       return { icon: Banknote, color: "text-red-500", bg: "bg-red-50" };
@@ -78,6 +60,8 @@ function getOrderStatusIcon(status: string) {
   switch (status) {
     case "pending":
       return { icon: Clock, color: "text-amber-500", bg: "bg-amber-50" };
+    case "processing":
+      return { icon: Package, color: "text-blue-500", bg: "bg-blue-50" };
     case "shipped":
       return { icon: Truck, color: "text-blue-500", bg: "bg-blue-50" };
     case "delivered":

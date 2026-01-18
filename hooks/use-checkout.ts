@@ -35,6 +35,7 @@ export interface CheckoutResponse {
   data: {
     orderId: string;
     orderNumber: string;
+    paymentUrl?: string;
   };
 }
 
@@ -150,6 +151,13 @@ export function useGuestCheckout() {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
 
       toast.success("Pesanan berhasil dibuat!");
+
+      // Open payment in new tab
+      if (result.data.paymentUrl) {
+        window.open(result.data.paymentUrl, "_blank");
+      }
+
+      // Redirect to order page
       router.push(`/myorder?orderId=${result.data.orderId}`);
     },
     onError: (error: Error) => {
@@ -188,6 +196,13 @@ export function useAuthenticatedCheckout() {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
 
       toast.success("Pesanan berhasil dibuat!");
+
+      // Open payment in new tab
+      if (result.data.paymentUrl) {
+        window.open(result.data.paymentUrl, "_blank");
+      }
+
+      // Redirect to order page
       router.push(`/myorder?orderId=${result.data.orderId}`);
     },
     onError: (error: Error) => {

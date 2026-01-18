@@ -95,7 +95,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex h-full w-full flex-col p-0 sm:max-w-[480px]"
+        className="flex h-full w-full flex-col p-0 sm:max-w-[480px] tracking-tight"
       >
         {/* Header */}
         <SheetHeader className="border-b px-4 md:px-6 py-4">
@@ -140,7 +140,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <ShoppingBag className="size-16 text-gray-300 mb-4" />
+                  <ShoppingBag className="size-8 text-gray-300 mb-4" />
                   <p className="text-lg font-medium text-gray-500 mb-2">
                     Keranjang Kosong
                   </p>

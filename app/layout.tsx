@@ -10,6 +10,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Global Inovasi Industri",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({

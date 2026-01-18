@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Package, Copy, Check } from "lucide-react";
 import { CompleteOrder } from "@/hooks/use-orders";
 import { formatCurrency, formatAddress, cn } from "@/lib/utils";
+import { formatPaymentStatus } from "@/lib/utils/status.utils";
 import dayjs from "dayjs";
 import { toast } from "sonner";
 import { StatusUpdateSection } from "./status-update-section";
@@ -24,14 +25,15 @@ interface OrderSheetProps {
 
 // Order timeline steps
 const ORDER_STEPS = [
-  { key: "pending", label: "Ordered" },
-  { key: "shipped", label: "Shipped" },
-  { key: "delivered", label: "Delivered" },
+  { key: "pending", label: "Dipesan" },
+  { key: "processing", label: "Diproses" },
+  { key: "shipped", label: "Dikirim" },
+  { key: "delivered", label: "Selesai" },
 ] as const;
 
 // Get step status
 function getStepStatus(stepKey: string, orderStatus: string) {
-  const stepOrder = ["pending", "shipped", "delivered"];
+  const stepOrder = ["pending", "processing", "shipped", "delivered"];
   const currentIndex = stepOrder.indexOf(orderStatus);
   const stepIndex = stepOrder.indexOf(stepKey);
 
@@ -45,6 +47,7 @@ function getStepStatus(stepKey: string, orderStatus: string) {
 function getStepDate(stepKey: string, order: CompleteOrder["order"]) {
   switch (stepKey) {
     case "pending":
+    case "processing":
       return order.createdAt;
     case "shipped":
       return order.shippedAt;
@@ -53,12 +56,6 @@ function getStepDate(stepKey: string, order: CompleteOrder["order"]) {
     default:
       return null;
   }
-}
-
-// Format payment status
-function formatPaymentStatus(status: string): string {
-  if (status === "pending") return "Unpaid";
-  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export function OrderSheet({

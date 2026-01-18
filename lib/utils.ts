@@ -61,7 +61,10 @@ export function formatDateTime(date: Date | string | null | undefined): string {
   return dayjs(date).format("MMM D, YYYY h:mm A");
 }
 
-// Status formatting utility
+// Status formatting utility - delegates to centralized status utils
+export { formatOrderStatus, formatPaymentStatus } from "./utils/status.utils";
+
+// Legacy formatStatus for backward compatibility - converts to title case
 export function formatStatus(status: string): string {
   return status
     .split("_")
@@ -69,24 +72,5 @@ export function formatStatus(status: string): string {
     .join(" ");
 }
 
-// Status variant mapping utility
-export function getStatusVariant(
-  status: string
-): "default" | "secondary" | "destructive" | "warning" | "outline" {
-  const statusMap: Record<
-    string,
-    "default" | "secondary" | "destructive" | "warning" | "outline"
-  > = {
-    // Order status
-    pending: "warning",
-    shipped: "secondary",
-    delivered: "default",
-    cancelled: "destructive",
-    // Payment status
-    paid: "default",
-    failed: "destructive",
-    refunded: "outline",
-  };
-
-  return statusMap[status] || "outline";
-}
+// Status variant mapping utility - delegates to centralized status utils
+export { getStatusVariant } from "./utils/status.utils";

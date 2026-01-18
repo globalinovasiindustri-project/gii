@@ -72,6 +72,7 @@
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.454.0",
+    "midtrans-client": "^1.4.3",
     "nanoid": "^5.1.6",
     "next": "15.2.8",
     "next-themes": "^0.4.4",

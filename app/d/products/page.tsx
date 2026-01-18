@@ -76,12 +76,10 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-medium tracking-tight">Produk</h1>
-        <Button
-          size={"sm"}
-          onClick={handleAddUser}
-          className="rounded-full size-8"
-        >
-          <Plus className="size-6" />
+
+        <Button variant="outline" size="sm" onClick={handleAddUser}>
+          <Plus className="h-4 w-4" />
+          Buat Produk
         </Button>
       </div>
 

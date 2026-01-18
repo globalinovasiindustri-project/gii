@@ -806,16 +806,17 @@ function ProductForm({
                       <Label className="text-sm font-medium">Harga (IDR)</Label>
                       <Input
                         placeholder="15,000,000"
-                        type="number"
+                        type="text"
                         className="text-sm"
-                        value={combination.price}
-                        onChange={(e) =>
-                          updateCombination(
-                            combination.id,
-                            "price",
-                            e.target.value
-                          )
+                        value={
+                          combination.price
+                            ? Number(combination.price).toLocaleString("id-ID")
+                            : ""
                         }
+                        onChange={(e) => {
+                          const rawValue = e.target.value.replace(/\D/g, "");
+                          updateCombination(combination.id, "price", rawValue);
+                        }}
                       />
                     </div>
 

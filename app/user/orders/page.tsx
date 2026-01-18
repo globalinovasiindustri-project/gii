@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useMyOrders } from "@/hooks/use-orders";
@@ -8,6 +8,7 @@ import { OrderCard } from "./_components/order-card";
 import { OrdersEmptyState } from "./_components/orders-empty-state";
 import { OrdersErrorState } from "./_components/orders-error-state";
 import { OrdersSkeleton } from "./_components/orders-skeleton";
+import Script from "next/script";
 
 function OrdersContent() {
   const { me } = useAuth();
@@ -64,8 +65,16 @@ function OrdersContent() {
 // Container page with Suspense for useSearchParams
 export default function OrdersPage() {
   return (
-    <Suspense fallback={<OrdersSkeleton />}>
-      <OrdersContent />
-    </Suspense>
+    <>
+      {/* Load Snap.js for payment popup */}
+      <Script
+        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+        strategy="lazyOnload"
+      />
+      <Suspense fallback={<OrdersSkeleton />}>
+        <OrdersContent />
+      </Suspense>
+    </>
   );
 }

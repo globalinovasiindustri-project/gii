@@ -63,7 +63,73 @@ export async function POST(request: NextRequest) {
       shippingCost: body.shippingCost,
     });
 
-    // 7. Return order ID and order number in response
+    // 7. Generate Midtrans payment token
+    const { paymentService } = await import("@/lib/services/payment.service");
+
+    // Get user details for payment
+    const { db } = await import("@/lib/db/db");
+    const { users } = await import("@/lib/db/schema");
+    const { eq } = await import("drizzle-orm");
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const nameParts = user.name.split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    const itemDetails = cartItems.map((item) => ({
+      id: item.productId,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    }));
+
+    // Add shipping as item
+    const shippingCost = body.shippingCost ?? 15000;
+    if (shippingCost > 0) {
+      itemDetails.push({
+        id: "shipping",
+        name: "Ongkos Kirim",
+        price: shippingCost,
+        quantity: 1,
+      });
+    }
+
+    const subtotal = cartItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+    const total = subtotal + shippingCost;
+
+    const paymentToken = await paymentService.createSnapToken({
+      orderId: result.orderId,
+      orderNumber: result.orderNumber,
+      grossAmount: total,
+      customerDetails: {
+        firstName,
+        lastName,
+        email: user.email,
+        phone: user.phone || "",
+      },
+      itemDetails,
+    });
+
+    // 8. Store Midtrans order ID and Snap token in order for payment retry support
+    const { orders } = await import("@/lib/db/schema");
+    await db
+      .update(orders)
+      .set({
+        midtransOrderId: paymentToken.midtransOrderId,
+        snapToken: paymentToken.token,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, result.orderId));
+
+    // 9. Return order ID, order number, and payment URL in response
     return NextResponse.json(
       {
         success: true,
@@ -71,6 +137,8 @@ export async function POST(request: NextRequest) {
         data: {
           orderId: result.orderId,
           orderNumber: result.orderNumber,
+          paymentUrl: paymentToken.redirectUrl,
+          snapToken: paymentToken.token,
         },
       },
       { status: 201 }

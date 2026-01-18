@@ -71,6 +71,13 @@
       "when": 1768419828061,
       "tag": "0009_add_variant_selections_to_order_items",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1768680379604,
+      "tag": "0010_nifty_fat_cobra",
+      "breakpoints": true
     }
   ]
 }

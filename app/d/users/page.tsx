@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { UserTable, User } from "./_components/user-table";
 import { UserFilters } from "./_components/user-filters";
 import { UserSheet } from "./_components/user-sheet";
@@ -124,8 +125,9 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-medium tracking-tight">User</h1>
-        <Button size={"sm"} onClick={handleAddUser}>
-          Tambahkan User
+        <Button variant="outline" size="sm" onClick={handleAddUser}>
+          <Plus className="h-4 w-4" />
+          Undang User
         </Button>
       </div>
 

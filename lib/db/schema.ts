@@ -21,6 +21,7 @@ export type Role = (typeof roleOptions)[keyof typeof roleOptions];
 
 // Order status options
 export const orderStatusOptions = {
+  PENDING: "pending",
   PROCESSING: "processing",
   SHIPPED: "shipped",
   DELIVERED: "delivered",
@@ -29,7 +30,7 @@ export const orderStatusOptions = {
 
 // Payment status options
 export const paymentStatusOptions = {
-  PENDING: "pending",
+  UNPAID: "unpaid",
   PAID: "paid",
   FAILED: "failed",
   REFUNDED: "refunded",
@@ -300,11 +301,13 @@ export const orders = pgTable(
 
     // Status tracking (using text fields with TypeScript constants for type safety)
     orderStatus: text("order_status").notNull().default("processing"),
-    paymentStatus: text("payment_status").notNull().default("pending"),
+    paymentStatus: text("payment_status").notNull().default("unpaid"),
 
     // Payment details
     paymentMethod: text("payment_method"), // e.g., "stripe", "paypal"
     paymentIntentId: text("payment_intent_id"), // For payment provider reconciliation
+    midtransOrderId: text("midtrans_order_id"), // Actual order_id sent to Midtrans (with timestamp for retries)
+    snapToken: text("snap_token"), // Snap token for payment retry
 
     // Shipping details
     trackingNumber: text("tracking_number"),
@@ -331,6 +334,9 @@ export const orders = pgTable(
     orderStatusIdx: index("order_status_idx").on(table.orderStatus),
     paymentStatusIdx: index("order_payment_status_idx").on(table.paymentStatus),
     createdAtIdx: index("order_created_at_idx").on(table.createdAt),
+    midtransOrderIdIdx: index("order_midtrans_order_id_idx").on(
+      table.midtransOrderId
+    ),
   })
 );
 

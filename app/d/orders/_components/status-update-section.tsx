@@ -27,10 +27,11 @@ interface StatusUpdateSectionProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: ORDER_STATUS.PENDING, label: "Pending" },
-  { value: ORDER_STATUS.SHIPPED, label: "Shipped" },
-  { value: ORDER_STATUS.DELIVERED, label: "Delivered" },
-  { value: ORDER_STATUS.CANCELLED, label: "Cancelled" },
+  { value: ORDER_STATUS.PENDING, label: "Menunggu" },
+  { value: ORDER_STATUS.PROCESSING, label: "Diproses" },
+  { value: ORDER_STATUS.SHIPPED, label: "Dikirim" },
+  { value: ORDER_STATUS.DELIVERED, label: "Selesai" },
+  { value: ORDER_STATUS.CANCELLED, label: "Dibatalkan" },
 ] as const;
 
 export function StatusUpdateSection({

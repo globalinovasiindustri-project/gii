@@ -73,6 +73,7 @@ export interface UserOrder {
   shippingAddress: string;
   customerNotes: string | null;
   createdAt: string;
+  snapToken: string | null;
   orderItems: UserOrderItem[];
 }
 
@@ -312,6 +313,41 @@ export function useExportOrders() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Gagal mengekspor data order");
+    },
+  });
+}
+
+// Payment retry API
+const paymentApi = {
+  retryPayment: async (orderId: string) => {
+    const response = await fetch("/api/payment/retry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ orderId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Gagal membuat token pembayaran");
+    }
+
+    return response.json();
+  },
+};
+
+// Hook for retrying payment
+export function useRetryPayment() {
+  return useMutation({
+    mutationFn: (orderId: string) => paymentApi.retryPayment(orderId),
+    onSuccess: (data) => {
+      // Redirect to payment page
+      if (data.data?.paymentUrl) {
+        window.location.href = data.data.paymentUrl;
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Gagal membuat token pembayaran");
     },
   });
 }
