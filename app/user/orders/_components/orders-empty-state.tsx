@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export function OrdersEmptyState() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-6">Pesanan Saya</h1>
+      <h1 className="text-2xl font-medium tracking-tight mb-6">Pesanan Saya</h1>
       <Card>
         <CardContent className="pt-6">
           <div className="text-center py-12">
