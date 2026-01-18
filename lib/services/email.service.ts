@@ -6,6 +6,16 @@ import { NewUserNotification } from "@/components/email-template/new-user-notifi
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = "BeliElektronik <noreply@belielektronik.com>";
 
+// Debug logging
+console.log("Resend API Key exists:", !!process.env.RESEND_API_KEY);
+console.log("Resend API Key length:", process.env.RESEND_API_KEY?.length);
+console.log(
+  "Resend API Key prefix:",
+  process.env.RESEND_API_KEY?.substring(0, 10),
+);
+console.log("Environment:", process.env.NODE_ENV);
+console.log("App URL:", process.env.NEXT_PUBLIC_APP_URL);
+
 export const emailService = {
   sendConfirmationEmail: async ({
     to,
@@ -61,6 +71,20 @@ export const emailService = {
     name: string;
     magicLink: string;
   }) => {
+    // Temporary workaround for staging
+    if (
+      process.env.NEXT_PUBLIC_APP_URL?.includes("staging.belielektronik.com")
+    ) {
+      console.log("Staging environment detected, skipping email send");
+      console.log("Would send magic link to:", to);
+      console.log("Magic link:", magicLink);
+      return {
+        success: true,
+        message: "Magic link berhasil dikirim ke email kamu (staging mode)",
+        data: { id: "staging-mock" },
+      };
+    }
+
     try {
       const { data, error } = await resend.emails.send({
         from: FROM_EMAIL,
@@ -74,6 +98,7 @@ export const emailService = {
 
       if (error) {
         console.error("Error sending magic link email:", error);
+        console.error("Error details:", JSON.stringify(error, null, 2));
         return {
           success: false,
           message: "Gagal mengirim magic link email",
@@ -89,6 +114,18 @@ export const emailService = {
       };
     } catch (error) {
       console.error("Magic link email service error:", error);
+      console.error(
+        "Error stack:",
+        error instanceof Error ? error.stack : "No stack trace",
+      );
+      console.error(
+        "Error name:",
+        error instanceof Error ? error.name : "Unknown",
+      );
+      console.error(
+        "Error message:",
+        error instanceof Error ? error.message : String(error),
+      );
       return {
         success: false,
         message: "Terjadi kesalahan saat mengirim magic link",
