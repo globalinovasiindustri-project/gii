@@ -71,21 +71,14 @@ export const emailService = {
     name: string;
     magicLink: string;
   }) => {
-    // Temporary workaround for staging
-    if (
-      process.env.NEXT_PUBLIC_APP_URL?.includes("staging.belielektronik.com")
-    ) {
-      console.log("Staging environment detected, skipping email send");
-      console.log("Would send magic link to:", to);
-      console.log("Magic link:", magicLink);
-      return {
-        success: true,
-        message: "Magic link berhasil dikirim ke email kamu (staging mode)",
-        data: { id: "staging-mock" },
-      };
-    }
-
     try {
+      console.log("About to send magic link email via Resend...");
+      console.log("From:", FROM_EMAIL);
+      console.log("To:", to);
+      console.log("Subject: Login ke BeliElektronik");
+      console.log("Environment:", process.env.NODE_ENV);
+      console.log("App URL:", process.env.NEXT_PUBLIC_APP_URL);
+
       const { data, error } = await resend.emails.send({
         from: FROM_EMAIL,
         to: [to],
@@ -95,6 +88,10 @@ export const emailService = {
           magicLink,
         }),
       });
+
+      console.log("Resend API response received");
+      console.log("Data:", data);
+      console.log("Error:", error);
 
       if (error) {
         console.error("Error sending magic link email:", error);
