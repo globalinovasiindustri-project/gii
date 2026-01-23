@@ -19,7 +19,7 @@ const heroImages = [
     text: "NEW ARRIVALS",
   },
   {
-    src: "/slideshow-3.webp?height=700&width=1400",
+    src: "/slideshow-3.png?height=700&width=1400",
     alt: "Hero Image 3: Urban streetwear",
     text: "EXPLORE THE COLLECTION",
   },
@@ -37,7 +37,7 @@ export function HeroSection() {
 
   const goToPrevious = () => {
     setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + heroImages.length) % heroImages.length
+      (prevIndex) => (prevIndex - 1 + heroImages.length) % heroImages.length,
     );
   };
 
@@ -46,75 +46,74 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative flex justify-center overflow-hidden">
+    <section className="relative flex flex-col items-center justify-center overflow-hidden">
       {/* This div acts as the viewport for the slider, ensuring it's centered and has rounded corners */}
-      <div className="relative h-[48vh] md:h-[64vh] w-full max-w-[1400px]">
-        {/* This div contains all the slides and will be translated horizontally */}
-        <div
-          className="flex h-full transition-transform duration-700 ease-in-out"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-        >
-          {heroImages.map((image, index) => (
-            <div
-              key={index}
-              className="relative h-full w-full flex-shrink-0 px-4 pt-8 md:pt-10" // Add padding to create visual gap between slides
-            >
-              {/* Inner div for the actual image and overlay, applying the rounded corners and overflow-hidden */}
-              <div className="relative h-full w-full overflow-hidden rounded-3xl">
-                <Image
-                  src={image.src || "/placeholder.svg"}
-                  alt={image.alt}
-                  fill
-                  className="object-cover object-center"
-                  priority={index === 0}
-                />
-                <div className="absolute inset-0 rounded-3xl bg-black/20" />
-                {/* <div className="relative z-10 flex h-full flex-col items-start justify-end p-8 md:p-16">
-                  <h1 className="text-4xl font-extrabold uppercase leading-tight text-white md:text-6xl lg:text-7xl">
-                    {image.text}
-                  </h1>
-                </div> */}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Navigation Arrows and Dots - positioned absolutely relative to the max-w container */}
-        <div className="absolute bottom-8 left-8 right-8 z-20 flex items-center justify-between md:bottom-16 md:left-16 md:right-16">
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full border-white bg-transparent text-white hover:bg-white hover:text-black"
-            onClick={goToPrevious}
-            aria-label="Previous slide"
+      <div className="relative w-full max-w-[1400px]">
+        {/* Aspect ratio container: 16:9 for mobile, 18:6 (3:1) for desktop */}
+        <div className="relative aspect-[16/9] md:aspect-[3/1]">
+          {/* This div contains all the slides and will be translated horizontally */}
+          <div
+            className="flex h-full transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
-            <ArrowLeft className="size-5" />
-          </Button>
-          <div className="flex space-x-2">
-            {heroImages.map((_, index) => (
-              <button
+            {heroImages.map((image, index) => (
+              <div
                 key={index}
-                className={cn(
-                  "size-2 rounded-full bg-white transition-all duration-300",
-                  index === currentIndex
-                    ? "scale-125 opacity-100"
-                    : "opacity-50"
-                )}
-                onClick={() => setCurrentIndex(index)}
-                aria-label={`Go to slide ${index + 1}`}
-              />
+                className="relative h-full w-full flex-shrink-0 px-4 pt-8 md:pt-10" // Add padding to create visual gap between slides
+              >
+                {/* Inner div for the actual image and overlay, applying the rounded corners and overflow-hidden */}
+                <div className="relative h-full w-full overflow-hidden rounded-3xl">
+                  <Image
+                    src={image.src || "/placeholder.svg"}
+                    alt={image.alt}
+                    fill
+                    className="object-cover object-center"
+                    priority={index === 0}
+                  />
+                </div>
+              </div>
             ))}
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full border-white bg-transparent text-white hover:bg-white hover:text-black"
-            onClick={goToNext}
-            aria-label="Next slide"
-          >
-            <ArrowRight className="size-5" />
-          </Button>
+
+          {/* Navigation Arrows - positioned absolutely inside the image (currently hidden) */}
+          <div className="absolute inset-x-8 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-between md:inset-x-16">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full border-white bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-black"
+              onClick={goToPrevious}
+              aria-label="Previous slide"
+            >
+              <ArrowLeft className="size-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full border-white bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-black"
+              onClick={goToNext}
+              aria-label="Next slide"
+            >
+              <ArrowRight className="size-5" />
+            </Button>
+          </div>
         </div>
+      </div>
+
+      {/* Dots indicator - positioned below the image */}
+      <div className="mt-6 mb-1 flex space-x-2">
+        {heroImages.map((_, index) => (
+          <button
+            key={index}
+            className={cn(
+              "size-2.5 rounded-full transition-all duration-300",
+              index === currentIndex
+                ? "scale-125 bg-gray-800"
+                : "bg-gray-300 hover:bg-gray-400",
+            )}
+            onClick={() => setCurrentIndex(index)}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
       </div>
     </section>
   );

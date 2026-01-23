@@ -8,6 +8,7 @@ import { OrderCard } from "./_components/order-card";
 import { OrdersEmptyState } from "./_components/orders-empty-state";
 import { OrdersErrorState } from "./_components/orders-error-state";
 import { OrdersSkeleton } from "./_components/orders-skeleton";
+import { SiteFooter } from "@/components/common/site-footer";
 import Script from "next/script";
 
 function OrdersContent() {
@@ -47,18 +48,23 @@ function OrdersContent() {
 
   // Orders list (Requirement 2.1)
   return (
-    <div className="container mx-auto py-8 px-4 max-w-5xl">
-      <h1 className="text-2xl font-medium tracking-tight mb-6">Pesanan Saya</h1>
-      <div className="space-y-4">
-        {orders.map((order) => (
-          <OrderCard
-            key={order.id}
-            order={order}
-            isHighlighted={order.id === highlightOrderId}
-          />
-        ))}
+    <>
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
+        <h1 className="text-2xl font-medium tracking-tight mb-6">
+          Pesanan Saya
+        </h1>
+        <div className="space-y-4">
+          {orders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              isHighlighted={order.id === highlightOrderId}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+      <SiteFooter />
+    </>
   );
 }
 

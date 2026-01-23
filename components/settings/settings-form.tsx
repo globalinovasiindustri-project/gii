@@ -11,7 +11,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup } from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
 import { ImageIcon } from "lucide-react";
+import {
+  Dropzone,
+  DropZoneArea,
+  DropzoneDescription,
+  DropzoneMessage,
+  DropzoneTrigger,
+  useDropzone,
+} from "@/components/ui/dropzone";
+import { uploadFileWithRetry } from "@/lib/upload-utils";
+import { CloudUploadIcon, Trash2Icon } from "lucide-react";
 
 interface SettingsFormProps {
   initialData?: SettingsSchema;
@@ -30,8 +41,6 @@ export function SettingsForm({
       heroImages: [],
       contactPhone: "",
       contactEmail: "",
-      socialTwitter: "",
-      socialFacebook: "",
       socialInstagram: "",
       socialTiktok: "",
       socialWhatsapp: "",
@@ -39,6 +48,7 @@ export function SettingsForm({
       shippingOriginCity: "",
       shippingOriginProvince: "",
       shippingOriginPostalCode: "",
+      taxEnabled: false,
       taxPercentage: 11,
       pendingOrderTimeLimitHours: 24,
     },
@@ -46,9 +56,46 @@ export function SettingsForm({
 
   const heroImages = form.watch("heroImages") || [];
 
-  const handleHeroImagesChange = (newImages: string[]) => {
-    form.setValue("heroImages", newImages);
+  const handleRemoveImage = (index: number) => {
+    const updatedImages = heroImages.filter((_, idx) => idx !== index);
+    form.setValue("heroImages", updatedImages);
   };
+
+  const dropzone = useDropzone({
+    onDropFile: async (file: File) => {
+      try {
+        const result = await uploadFileWithRetry(file, 3, (progress) => {
+          console.log(
+            `Uploading ${progress.fileName}: ${progress.progress.toFixed(0)}%`,
+          );
+        });
+
+        // Add newly uploaded image
+        const currentImages = form.getValues("heroImages") || [];
+        form.setValue("heroImages", [...currentImages, result.url]);
+
+        return {
+          status: "success",
+          result: result.url,
+        };
+      } catch (error) {
+        console.error("Upload failed:", error);
+        return {
+          status: "error",
+          error: error instanceof Error ? error.message : "Upload failed",
+        };
+      }
+    },
+    validation: {
+      accept: {
+        "image/*": [".png", ".jpg", ".jpeg"],
+      },
+      maxSize: 50 * 1024 * 1024,
+      maxFiles: 5,
+    },
+    maxRetryCount: 3,
+    autoRetry: true,
+  });
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -64,64 +111,102 @@ export function SettingsForm({
             <Field>
               <div className="space-y-2">
                 <label className="text-sm">Gambar Hero</label>
-                <div className="border rounded-lg p-4 bg-muted/30">
-                  {heroImages.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">Belum ada gambar hero</p>
-                      <p className="text-xs mt-1">
-                        Upload gambar untuk carousel landing page
-                      </p>
+
+                <Dropzone {...dropzone}>
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <DropzoneDescription>
+                        Upload maksimal 5 gambar untuk carousel hero
+                      </DropzoneDescription>
+                      <DropzoneMessage />
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {heroImages.length < 5 && (
+                      <DropZoneArea>
+                        <DropzoneTrigger className="flex flex-col items-center gap-4 bg-transparent p-8 text-center text-sm">
+                          <CloudUploadIcon className="size-5" />
+                          <div>
+                            <p className="font-medium">Upload gambar hero</p>
+                            <p className="text-sm text-muted-foreground">
+                              Klik di sini atau tarik gambar untuk mengunggah
+                            </p>
+                          </div>
+                        </DropzoneTrigger>
+                      </DropZoneArea>
+                    )}
+                  </div>
+
+                  {/* Display uploaded images */}
+                  {(heroImages.length > 0 ||
+                    dropzone.fileStatuses.some(
+                      (f) => f.status === "pending",
+                    )) && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                      {/* Existing images */}
                       {heroImages.map((imageUrl, index) => (
-                        <div key={index} className="relative group">
+                        <div
+                          key={`hero-${index}`}
+                          className="overflow-hidden rounded-md bg-secondary shadow-sm relative"
+                        >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imageUrl}
                             alt={`Hero ${index + 1}`}
-                            className="w-full aspect-video object-cover rounded-md"
+                            className="aspect-video object-cover"
                           />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newImages = heroImages.filter(
-                                (_, i) => i !== index,
-                              );
-                              handleHeroImagesChange(newImages);
-                            }}
-                            className="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
+                          <div className="flex items-center justify-between p-2">
+                            <p className="text-sm truncate">Hero {index + 1}</p>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(index)}
+                              className="shrink-0 hover:bg-accent rounded-md p-1.5"
+                              disabled={isSubmitting}
                             >
-                              <path d="M18 6 6 18" />
-                              <path d="m6 6 12 12" />
-                            </svg>
-                          </button>
+                              <Trash2Icon className="size-4" />
+                            </button>
+                          </div>
                         </div>
                       ))}
+
+                      {/* Pending uploads */}
+                      {dropzone.fileStatuses
+                        .filter((file) => file.status === "pending")
+                        .map((file) => (
+                          <div
+                            key={file.id}
+                            className="overflow-hidden rounded-md bg-secondary shadow-sm"
+                          >
+                            <div className="relative aspect-video">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={URL.createObjectURL(file.file)}
+                                alt={`preview-${file.fileName}`}
+                                className="aspect-video object-cover"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent" />
+                                  <p className="text-xs text-white">
+                                    Uploading...
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-2">
+                              <p className="text-sm truncate">
+                                {file.fileName}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                     </div>
                   )}
-                </div>
+                </Dropzone>
+
                 {form.formState.errors.heroImages && (
                   <p className="text-sm text-destructive">
                     {form.formState.errors.heroImages.message}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  Upload maksimal 5 gambar untuk carousel hero (fitur upload
-                  akan diintegrasikan)
-                </p>
               </div>
             </Field>
           </FieldGroup>
@@ -185,44 +270,6 @@ export function SettingsForm({
         </CardHeader>
         <CardContent>
           <FieldGroup className="gap-4">
-            <Field>
-              <div className="group relative w-full">
-                <label className="text-sm mb-1">Twitter</label>
-                <Input
-                  id="socialTwitter"
-                  type="url"
-                  placeholder="https://twitter.com/username"
-                  disabled={isSubmitting}
-                  className="h-11"
-                  {...form.register("socialTwitter")}
-                />
-              </div>
-              {form.formState.errors.socialTwitter && (
-                <p className="text-destructive text-sm">
-                  {form.formState.errors.socialTwitter.message}
-                </p>
-              )}
-            </Field>
-
-            <Field>
-              <div className="group relative w-full">
-                <label className="text-sm mb-1">Facebook</label>
-                <Input
-                  id="socialFacebook"
-                  type="url"
-                  placeholder="https://facebook.com/username"
-                  disabled={isSubmitting}
-                  className="h-11"
-                  {...form.register("socialFacebook")}
-                />
-              </div>
-              {form.formState.errors.socialFacebook && (
-                <p className="text-destructive text-sm">
-                  {form.formState.errors.socialFacebook.message}
-                </p>
-              )}
-            </Field>
-
             <Field>
               <div className="group relative w-full">
                 <label className="text-sm mb-1">Instagram</label>
@@ -377,35 +424,55 @@ export function SettingsForm({
       <Card className="border tracking-tight">
         <CardHeader>
           <CardTitle className="text-base font-medium">
-            Pengaturan Lainnya
+            Pengaturan Pajak & Pesanan
           </CardTitle>
         </CardHeader>
         <CardContent>
           <FieldGroup className="gap-4">
             <Field>
-              <div className="group relative w-full">
-                <label className="text-sm mb-1">Persentase Pajak (%)</label>
-                <Input
-                  id="taxPercentage"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  placeholder="11"
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium">Mode Pajak</label>
+                  <p className="text-xs text-muted-foreground">
+                    Aktifkan untuk menambahkan pajak ke semua pesanan
+                  </p>
+                </div>
+                <Switch
+                  checked={form.watch("taxEnabled")}
+                  onCheckedChange={(checked) =>
+                    form.setValue("taxEnabled", checked)
+                  }
                   disabled={isSubmitting}
-                  className="h-11"
-                  {...form.register("taxPercentage", { valueAsNumber: true })}
                 />
               </div>
-              {form.formState.errors.taxPercentage && (
-                <p className="text-destructive text-sm">
-                  {form.formState.errors.taxPercentage.message}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                Pajak yang akan ditambahkan ke total pesanan (PPN)
-              </p>
             </Field>
+
+            {form.watch("taxEnabled") && (
+              <Field>
+                <div className="group relative w-full">
+                  <label className="text-sm mb-1">Persentase Pajak (%)</label>
+                  <Input
+                    id="taxPercentage"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    placeholder="11"
+                    disabled={isSubmitting}
+                    className="h-11"
+                    {...form.register("taxPercentage", { valueAsNumber: true })}
+                  />
+                </div>
+                {form.formState.errors.taxPercentage && (
+                  <p className="text-destructive text-sm">
+                    {form.formState.errors.taxPercentage.message}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Pajak yang akan ditambahkan ke total pesanan (PPN)
+                </p>
+              </Field>
+            )}
 
             <Field>
               <div className="group relative w-full">
