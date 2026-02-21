@@ -51,7 +51,7 @@ const combinationVariantsSchema = z
 export const variantCombinationSchema = z.object({
   id: z.string().optional(),
   variants: combinationVariantsSchema.default({}),
-  sku: z.string().min(1, { message: "SKU harus diisi" }),
+  sku: z.string().optional(), // SKU is now optional
   name: z.string().optional(), // Nama kombinasi tidak ada di UI, boleh dikosongkan/di-derive
   price: z.coerce
     .number({ required_error: "Harga harus diisi" })
@@ -109,14 +109,11 @@ export const productSchema = z
           isThumbnail: z.boolean(),
         }),
       )
-      .optional()
+      .min(2, { message: "Minimal 2 gambar harus diunggah" })
       .refine(
         (images) => {
-          // If images exist, at least one must be marked as thumbnail
-          if (images && images.length > 0) {
-            return images.some((img) => img.isThumbnail);
-          }
-          return true;
+          // At least one must be marked as thumbnail
+          return images.some((img) => img.isThumbnail);
         },
         { message: "Setidaknya satu gambar harus ditandai sebagai thumbnail" },
       ),

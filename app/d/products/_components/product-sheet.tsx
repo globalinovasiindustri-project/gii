@@ -618,8 +618,11 @@ function ProductForm({
 
           <div className="space-y-4">
             <h3 className="tracking-tight font-medium text-muted-foreground">
-              Gambar Produk
+              Gambar Produk *
             </h3>
+            <p className="text-sm text-muted-foreground">
+              Minimal 2 gambar diperlukan. Tandai satu gambar sebagai thumbnail.
+            </p>
             <MultiUploader
               images={productImages}
               onImagesChange={handleImagesChange}
@@ -807,9 +810,9 @@ function ProductForm({
                         </div>
                       ))}
                     <div className="space-y-2 w-full">
-                      <Label className="text-sm font-medium">SKU *</Label>
+                      <Label className="text-sm font-medium">SKU</Label>
                       <Input
-                        placeholder="Nomor SKU"
+                        placeholder="Nomor SKU (opsional)"
                         className={`text-sm ${
                           form.formState.errors.combinations?.[index]?.sku
                             ? "border-red-500"
