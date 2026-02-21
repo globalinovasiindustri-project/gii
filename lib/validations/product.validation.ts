@@ -43,9 +43,9 @@ const combinationVariantsSchema = z
   .refine(
     (obj) =>
       Object.keys(obj).every((k) =>
-        (VARIANT_TYPE_VALUES as readonly string[]).includes(k)
+        (VARIANT_TYPE_VALUES as readonly string[]).includes(k),
       ),
-    { message: "Tipe varian tidak valid pada kombinasi" }
+    { message: "Tipe varian tidak valid pada kombinasi" },
   );
 
 export const variantCombinationSchema = z.object({
@@ -54,11 +54,11 @@ export const variantCombinationSchema = z.object({
   sku: z.string().min(1, { message: "SKU harus diisi" }),
   name: z.string().optional(), // Nama kombinasi tidak ada di UI, boleh dikosongkan/di-derive
   price: z.coerce
-    .number()
+    .number({ required_error: "Harga harus diisi" })
     .int({ message: "Harga harus berupa angka bulat" })
-    .min(0, { message: "Harga harus lebih besar atau sama dengan 0" }),
+    .min(1, { message: "Harga harus lebih besar dari 0" }),
   stock: z.coerce
-    .number()
+    .number({ required_error: "Stok harus diisi" })
     .int({ message: "Stok harus berupa angka bulat" })
     .min(0, { message: "Stok harus lebih besar atau sama dengan 0" }),
   active: z.boolean(),
@@ -86,13 +86,15 @@ export const productSchema = z
       required_error: "Kategori harus dipilih",
     }),
     brand: z.enum(BRAND_VALUES, { required_error: "Merk harus dipilih" }),
-    // Berat di UI ada di level grup, opsional; dikonversi ke number
+    // Berat di UI ada di level grup, required
     weight: z.coerce
-      .number()
+      .number({ required_error: "Berat harus diisi" })
       .int({ message: "Berat harus berupa angka bulat" })
-      .min(0, { message: "Berat harus lebih besar atau sama dengan 0" })
-      .optional(),
-    description: z.string().max(500).optional(),
+      .min(1, { message: "Berat harus lebih besar dari 0" }),
+    description: z
+      .string({ required_error: "Deskripsi harus diisi" })
+      .min(1, { message: "Deskripsi harus diisi" })
+      .max(500, { message: "Deskripsi maksimal 500 karakter" }),
     isActive: z.boolean(),
     hasVariants: z.boolean(),
 
@@ -105,7 +107,7 @@ export const productSchema = z
         z.object({
           url: z.string().url({ message: "URL gambar tidak valid" }),
           isThumbnail: z.boolean(),
-        })
+        }),
       )
       .optional()
       .refine(
@@ -116,7 +118,7 @@ export const productSchema = z
           }
           return true;
         },
-        { message: "Setidaknya satu gambar harus ditandai sebagai thumbnail" }
+        { message: "Setidaknya satu gambar harus ditandai sebagai thumbnail" },
       ),
 
     // Selaras dengan checkbox di UI (selectedVariants)
@@ -135,8 +137,8 @@ export const productSchema = z
       .transform((items) =>
         // Filter out items where both title and body are empty strings
         items.filter(
-          (item) => item.title.trim() !== "" && item.body.trim() !== ""
-        )
+          (item) => item.title.trim() !== "" && item.body.trim() !== "",
+        ),
       ),
   })
   .superRefine((data, ctx) => {

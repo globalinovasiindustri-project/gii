@@ -37,7 +37,7 @@ import type { ProductCategory, ProductBrand, VariantType } from "@/lib/enums";
 // Helper function to get variant label from value
 const getVariantLabel = (variantValue: VariantType): string => {
   const variant = Object.values(VARIANT_TYPES).find(
-    (v) => v.value === variantValue
+    (v) => v.value === variantValue,
   );
   return variant?.label || variantValue;
 };
@@ -110,10 +110,10 @@ function ProductForm({
   const updateAdditionalDescription = (
     id: number,
     field: "title" | "body",
-    value: string
+    value: string,
   ) => {
     setAdditionalDescriptions((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d))
+      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
     );
   };
 
@@ -122,8 +122,8 @@ function ProductForm({
     imagesOrUpdater:
       | Array<{ url: string; isThumbnail: boolean }>
       | ((
-          prev: Array<{ url: string; isThumbnail: boolean }>
-        ) => Array<{ url: string; isThumbnail: boolean }>)
+          prev: Array<{ url: string; isThumbnail: boolean }>,
+        ) => Array<{ url: string; isThumbnail: boolean }>),
   ) => {
     setProductImages((prevImages) => {
       const newImages =
@@ -163,7 +163,7 @@ function ProductForm({
 
   const updateCombination = (id: number, field: string, value: any) => {
     setProductCombinations((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
+      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
     );
   };
 
@@ -171,20 +171,17 @@ function ProductForm({
   const getInitialValues = (): ProductSchema => {
     if (mode === "edit" && selectedProduct) {
       const allowedVariantValues = Object.values(VARIANT_TYPES).map(
-        (v) => v.value
+        (v) => v.value,
       ) as VariantType[];
       const initialVariantTypes = Array.from(
-        new Set(selectedProduct.variants.map((v) => v.variant))
+        new Set(selectedProduct.variants.map((v) => v.variant)),
       ).filter((v): v is VariantType =>
-        (allowedVariantValues as readonly string[]).includes(v)
+        (allowedVariantValues as readonly string[]).includes(v),
       );
 
       const initialCombinations = (selectedProduct.products ?? []).map((p) => ({
         id: p.id,
-        variants:
-          (selectedProduct.variantSelectionsByProductId &&
-            selectedProduct.variantSelectionsByProductId[p.id]) ||
-          {},
+        variants: selectedProduct.variantSelectionsByProductId?.[p.id] || {},
         sku: p.sku ?? "",
         name: p.name ?? "",
         price: String(p.price ?? 0),
@@ -212,8 +209,8 @@ function ProductForm({
         isActive: !!selectedProduct.productGroup.isActive,
         hasVariants: initialVariantTypes.length > 0,
         isHighlighted: !!selectedProduct.productGroup.isHighlighted,
-        weight: selectedProduct.productGroup?.weight ?? undefined,
-        description: selectedProduct.productGroup.description ?? undefined,
+        weight: selectedProduct.productGroup?.weight ?? 0,
+        description: selectedProduct.productGroup.description ?? "",
         variantTypes: initialVariantTypes,
         combinations: initialCombinations.map(toCombinationPayload),
         images: existingImages,
@@ -229,8 +226,8 @@ function ProductForm({
       isActive: true,
       hasVariants: false,
       isHighlighted: false,
-      weight: undefined,
-      description: undefined,
+      weight: 0,
+      description: "",
       variantTypes: [],
       combinations: [
         {
@@ -257,7 +254,7 @@ function ProductForm({
   useEffect(() => {
     form.setValue(
       "combinations",
-      productCombinations.map(toCombinationPayload)
+      productCombinations.map(toCombinationPayload),
     );
   }, [productCombinations]);
 
@@ -324,12 +321,12 @@ function ProductForm({
   useEffect(() => {
     if (mode === "edit" && selectedProduct) {
       const allowedVariantValues = Object.values(VARIANT_TYPES).map(
-        (v) => v.value
+        (v) => v.value,
       ) as VariantType[];
       const initialVariantTypes = Array.from(
-        new Set(selectedProduct.variants.map((v) => v.variant))
+        new Set(selectedProduct.variants.map((v) => v.variant)),
       ).filter((v): v is VariantType =>
-        (allowedVariantValues as readonly string[]).includes(v)
+        (allowedVariantValues as readonly string[]).includes(v),
       ) as VariantType[];
 
       const initialCombinations = (selectedProduct.products ?? []).map((p) => ({
@@ -350,7 +347,7 @@ function ProductForm({
       setProductWeight(
         selectedProduct.productGroup?.weight != null
           ? String(selectedProduct.productGroup.weight)
-          : ""
+          : "",
       );
 
       // Prefill additional descriptions
@@ -362,7 +359,7 @@ function ProductForm({
             id: idx + 1,
             title: d.title,
             body: d.body,
-          }))
+          })),
         );
       } else {
         setAdditionalDescriptions([]);
@@ -396,8 +393,8 @@ function ProductForm({
         isActive: true,
         hasVariants: false,
         isHighlighted: false,
-        weight: undefined,
-        description: undefined,
+        weight: 0,
+        description: "",
         variantTypes: [],
         combinations: [
           {
@@ -511,7 +508,7 @@ function ProductForm({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="weight"> Berat Produk (grams)</Label>
+                <Label htmlFor="weight">Berat Produk (grams) *</Label>
                 <Input
                   id="weight"
                   type="number"
@@ -520,13 +517,9 @@ function ProductForm({
                   onChange={(e) => {
                     const val = e.target.value;
                     setProductWeight(val);
-                    form.setValue(
-                      "weight",
-                      val === "" ? undefined : Number(val),
-                      {
-                        shouldValidate: true,
-                      }
-                    );
+                    form.setValue("weight", val === "" ? 0 : Number(val), {
+                      shouldValidate: true,
+                    });
                   }}
                   className={
                     form.formState.errors.weight ? "border-red-500" : ""
@@ -541,13 +534,21 @@ function ProductForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Deskripsi Produk</Label>
+              <Label htmlFor="description">Deskripsi Produk *</Label>
               <Textarea
                 id="description"
                 placeholder="Deskripsikan fitur dan spesifikasi produk..."
                 rows={3}
                 {...form.register("description")}
+                className={
+                  form.formState.errors.description ? "border-red-500" : ""
+                }
               />
+              {form.formState.errors.description && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.description.message}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
@@ -653,7 +654,7 @@ function ProductForm({
                             type="checkbox"
                             id={`variant-${variantType.value}`}
                             checked={selectedVariants.includes(
-                              variantType.value
+                              variantType.value,
                             )}
                             onChange={(e) => {
                               const key = variantType.value as VariantType;
@@ -673,16 +674,16 @@ function ProductForm({
                                 form.setValue("variantTypes", next, {
                                   shouldValidate: true,
                                 });
-                                // Clear variant values from all combinations when unchecked
+                                // Clear variants values from all combinations when unchecked
                                 setProductCombinations((prev) =>
                                   prev.map((combination) => ({
                                     ...combination,
                                     variants: Object.fromEntries(
                                       Object.entries(
-                                        combination.variants
-                                      ).filter(([k]) => k !== key)
+                                        combination.variants,
+                                      ).filter(([k]) => k !== key),
                                     ),
-                                  }))
+                                  })),
                                 );
                               }
                             }}
@@ -700,6 +701,11 @@ function ProductForm({
                     <p className="text-sm text-muted-foreground">
                       Pilih variant yang akan digunakan
                     </p>
+                    {form.formState.errors.variantTypes?.message && (
+                      <p className="text-sm text-red-500">
+                        {form.formState.errors.variantTypes.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -766,11 +772,16 @@ function ProductForm({
                       selectedVariants.map((variantType) => (
                         <div key={variantType} className="space-y-2 w-full">
                           <Label className="text-sm font-medium">
-                            {getVariantLabel(variantType)}
+                            {getVariantLabel(variantType)} *
                           </Label>
                           <Input
                             placeholder={`Masukkan ${getVariantLabel(variantType).toLowerCase()}`}
-                            className="text-sm"
+                            className={`text-sm ${
+                              form.formState.errors.combinations?.[index]
+                                ?.variants
+                                ? "border-red-500"
+                                : ""
+                            }`}
                             value={combination.variants[variantType] || ""}
                             onChange={(e) => {
                               const newVariants = {
@@ -780,34 +791,62 @@ function ProductForm({
                               updateCombination(
                                 combination.id,
                                 "variants",
-                                newVariants
+                                newVariants,
                               );
                             }}
                           />
+                          {form.formState.errors.combinations?.[index]?.variants
+                            ?.message && (
+                            <p className="text-sm text-red-500">
+                              {String(
+                                form.formState.errors.combinations[index]
+                                  ?.variants?.message || "",
+                              )}
+                            </p>
+                          )}
                         </div>
                       ))}
                     <div className="space-y-2 w-full">
-                      <Label className="text-sm font-medium">SKU</Label>
+                      <Label className="text-sm font-medium">SKU *</Label>
                       <Input
                         placeholder="Nomor SKU"
-                        className="text-sm"
+                        className={`text-sm ${
+                          form.formState.errors.combinations?.[index]?.sku
+                            ? "border-red-500"
+                            : ""
+                        }`}
                         value={combination.sku}
                         onChange={(e) =>
                           updateCombination(
                             combination.id,
                             "sku",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                       />
+                      {form.formState.errors.combinations?.[index]?.sku
+                        ?.message && (
+                        <p className="text-sm text-red-500">
+                          {
+                            form.formState.errors.combinations[index].sku
+                              ?.message
+                          }
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2 w-full">
-                      <Label className="text-sm font-medium">Harga (IDR)</Label>
+                      <Label className="text-sm font-medium">
+                        Harga (IDR) *
+                      </Label>
                       <Input
                         placeholder="15,000,000"
                         type="text"
-                        className="text-sm"
+                        className={`text-sm ${
+                          form.formState.errors.combinations?.[index]?.price
+                            ? "border-red-500"
+                            : ""
+                        }`}
                         value={
                           combination.price
                             ? Number(combination.price).toLocaleString("id-ID")
@@ -818,23 +857,45 @@ function ProductForm({
                           updateCombination(combination.id, "price", rawValue);
                         }}
                       />
+                      {form.formState.errors.combinations?.[index]?.price
+                        ?.message && (
+                        <p className="text-sm text-red-500">
+                          {
+                            form.formState.errors.combinations[index].price
+                              ?.message
+                          }
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2 w-full">
-                      <Label className="text-sm font-medium">Stok</Label>
+                      <Label className="text-sm font-medium">Stok *</Label>
                       <Input
                         placeholder="0"
                         type="number"
-                        className="text-sm"
+                        className={`text-sm ${
+                          form.formState.errors.combinations?.[index]?.stock
+                            ? "border-red-500"
+                            : ""
+                        }`}
                         value={combination.stock}
                         onChange={(e) =>
                           updateCombination(
                             combination.id,
                             "stock",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                       />
+                      {form.formState.errors.combinations?.[index]?.stock
+                        ?.message && (
+                        <p className="text-sm text-red-500">
+                          {
+                            form.formState.errors.combinations[index].stock
+                              ?.message
+                          }
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -910,7 +971,7 @@ function ProductForm({
                           updateAdditionalDescription(
                             item.id,
                             "title",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         maxLength={100}
@@ -942,7 +1003,7 @@ function ProductForm({
                           updateAdditionalDescription(
                             item.id,
                             "body",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         rows={3}

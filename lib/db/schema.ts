@@ -127,7 +127,7 @@ export const products = pgTable(
     productGroupId: uuid("product_group_id")
       .references(() => productGroups.id, { onDelete: "cascade" })
       .notNull(),
-    sku: text("sku").notNull().unique(), // e.g., "IPHONE-15-128GB-BLACK"
+    sku: text("sku").notNull(), // e.g., "IPHONE-15-128GB-BLACK"
     name: text("name").notNull(), // e.g., "iPhone 15 128GB Black"
     price: integer("price").notNull(), // Harga dalam smallest currency unit (e.g., cents/rupiah)
     stock: integer("stock").notNull().default(0),
