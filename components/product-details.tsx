@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PrimaryOrionButton } from "@/components/ui/orion-button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Rating, RatingButton } from "./ui/shadcn-io/rating";
@@ -29,7 +30,7 @@ import type { SelectProduct } from "@/lib/db/schema";
 // Helper function to get variant label from value
 const getVariantLabel = (variantValue: string): string => {
   const variant = Object.values(VARIANT_TYPES).find(
-    (v) => v.value === variantValue
+    (v) => v.value === variantValue,
   );
   return variant?.label || variantValue;
 };
@@ -120,7 +121,7 @@ export function ProductDetails({
       <TooltipProvider>
         {variantGroups.map((group) => {
           const allOptionsUnavailable = group.options.every(
-            (option) => option.disabled || !option.available
+            (option) => option.disabled || !option.available,
           );
 
           return (
@@ -154,7 +155,7 @@ export function ProductDetails({
                           isSelected
                             ? "bg-black text-white hover:bg-black"
                             : "bg-white text-black hover:bg-gray-100",
-                          isDisabled && "cursor-not-allowed opacity-50"
+                          isDisabled && "cursor-not-allowed opacity-50",
                         )}
                         onClick={() =>
                           onVariantChange(group.type, option.value)
@@ -271,6 +272,14 @@ export function ProductDetails({
         >
           Tambah ke Keranjang
         </Button>
+
+        <PrimaryOrionButton
+          onClick={onAddToCart}
+          disabled={isAddToCartDisabled}
+          size={"lg"}
+        >
+          Tambah ke Keranjang
+        </PrimaryOrionButton>
       </div>
     </div>
   );

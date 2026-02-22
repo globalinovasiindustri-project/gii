@@ -40,7 +40,7 @@ interface CarouselProduct {
 }
 
 async function fetchProducts(
-  sortBy: "newest" | "random"
+  sortBy: "newest" | "random",
 ): Promise<CarouselProduct[]> {
   try {
     // Fetch directly from service for better performance and SEO
@@ -50,7 +50,7 @@ async function fetchProducts(
         sortBy: sortBy,
         limit: 10,
       },
-      "user"
+      "user",
     );
 
     // Transform to carousel format

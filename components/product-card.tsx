@@ -35,14 +35,14 @@ export function ProductCard({
       <Card
         className={cn(
           "overflow-hidden rounded-2xl shadow-sm border-none bg-muted/80 max-w-[320px]",
-          className
+          className,
         )}
       >
-        <div className="relative aspect-square w-full">
+        <div className="relative aspect-square h-full p-4">
           <Image
             src={imageSrc || "/placeholder.svg"}
             alt={imageAlt}
-            className="rounded-t-xl object-cover mix-blend-multiply"
+            className="rounded-t-xl object-contain h-full mix-blend-multiply"
             width={320}
             height={320}
           />

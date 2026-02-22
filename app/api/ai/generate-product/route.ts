@@ -3,28 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 const RAPIDAPI_KEY =
   process.env.RAPIDAPI_KEY ||
   "c56678146dmsh07852f6a91039c1p13da3bjsne08e81cf1b85";
-const RAPIDAPI_HOST = "real-time-amazon-data.p.rapidapi.com";
+const RAPIDAPI_HOST = "axesso-axesso-amazon-data-service-v1.p.rapidapi.com";
 const AI_API_KEY = process.env.AI_API_KEY || "";
-
-type AmazonProduct = {
-  asin?: string;
-  product_title?: string;
-  product_price?: string;
-  product_photo?: string;
-  product_star_rating?: string;
-  product_num_ratings?: number;
-};
-
-type ProductDetail = {
-  product_title?: string;
-  product_description?: string;
-  about_product?: string[];
-  product_details?: Record<string, string>;
-  product_information?: Record<string, string>;
-  brand?: string;
-  product_photos?: string[];
-  category_path?: Array<{ name: string }>;
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,11 +18,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Searching for product:", productName);
-    console.log("RAPIDAPI_KEY available:", !!RAPIDAPI_KEY);
 
-    // Step 1: Search Amazon for products (limit to 2)
-    const searchUrl = `https://${RAPIDAPI_HOST}/search?query=${encodeURIComponent(productName)}&page=1&country=US&sort_by=RELEVANCE&product_condition=ALL&page_size=2`;
-    console.log("Search URL:", searchUrl);
+    // Step 1: Search Amazon using Axesso API
+    const searchUrl = `https://${RAPIDAPI_HOST}/amz/amazon-search-by-keyword-asin?domainCode=com&keyword=${encodeURIComponent(productName)}&page=1&excludeSponsored=false&sortBy=relevanceblender&withCache=true`;
 
     const searchResponse = await fetch(searchUrl, {
       headers: {
@@ -51,8 +29,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log("Search response status:", searchResponse.status);
-
     if (!searchResponse.ok) {
       const errorText = await searchResponse.text();
       console.error("Search API error:", searchResponse.status, errorText);
@@ -60,44 +36,57 @@ export async function POST(request: NextRequest) {
     }
 
     const searchData = await searchResponse.json();
-    console.log("Search data received:", !!searchData.data);
+    console.log("Search response:", JSON.stringify(searchData, null, 2));
 
-    const products: AmazonProduct[] = searchData.data?.products || [];
-    console.log("Products found:", products.length);
+    // Axesso returns ASIN codes in foundProducts array
+    const foundProducts = searchData.foundProducts || [];
+    console.log("Products found (ASINs):", foundProducts.length);
 
-    if (products.length === 0) {
+    if (foundProducts.length === 0) {
       return NextResponse.json(
         { success: false, message: "No products found" },
         { status: 404 },
       );
     }
 
-    // Step 2: Get details for first 2 products
-    const detailPromises = products.slice(0, 2).map(async (product) => {
-      if (!product.asin) return null;
+    // Step 2: Get detailed product info for first 2 ASINs using URL-based lookup
+    const detailPromises = foundProducts
+      .slice(0, 2)
+      .map(async (asin: string) => {
+        try {
+          // Construct Amazon product URL
+          const productUrl = `https://www.amazon.com/dp/${asin}/`;
+          const encodedUrl = encodeURIComponent(productUrl);
 
-      try {
-        const detailResponse = await fetch(
-          `https://${RAPIDAPI_HOST}/product-details?asin=${product.asin}&country=US`,
-          {
-            headers: {
-              "x-rapidapi-key": RAPIDAPI_KEY,
-              "x-rapidapi-host": RAPIDAPI_HOST,
+          const detailResponse = await fetch(
+            `https://${RAPIDAPI_HOST}/amz/amazon-lookup-product?url=${encodedUrl}`,
+            {
+              headers: {
+                "x-rapidapi-key": RAPIDAPI_KEY,
+                "x-rapidapi-host": RAPIDAPI_HOST,
+              },
             },
-          },
-        );
+          );
 
-        if (!detailResponse.ok) return null;
+          if (!detailResponse.ok) {
+            console.error(`Failed to fetch details for ASIN ${asin}`);
+            return null;
+          }
 
-        const detailData = await detailResponse.json();
-        return detailData.data as ProductDetail;
-      } catch {
-        return null;
-      }
-    });
+          const detailData = await detailResponse.json();
+          console.log(
+            `Detail for ${asin}:`,
+            JSON.stringify(detailData, null, 2),
+          );
+          return detailData;
+        } catch (error) {
+          console.error(`Error fetching details for ASIN ${asin}:`, error);
+          return null;
+        }
+      });
 
     const productDetails = (await Promise.all(detailPromises)).filter(
-      (detail): detail is ProductDetail => detail !== null,
+      (detail) => detail !== null,
     );
 
     if (productDetails.length === 0) {
@@ -108,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 3: Process with AI
-    const aiPrompt = `You are a product data processor. Based on the following Amazon product data, generate structured product information suitable for an e-commerce platform.
+    const aiPrompt = `You are a product data processor. Based on the following Amazon product data from Axesso API, generate structured product information suitable for an e-commerce platform.
 
 Product Data:
 ${JSON.stringify(productDetails, null, 2)}
@@ -131,8 +120,15 @@ Important:
 - Weight should be a realistic estimate in grams (e.g., smartphone: 150-250g, laptop: 1500-2500g)
 - Category must match exactly one of the provided options
 - Brand must be lowercase and match one of the provided options, use "other" if not listed
-- Images should be high quality product photos
-- Return ONLY valid JSON, no additional text`;
+- Images should be high quality product photos (look for imgUrl, productImages, images, or similar fields)
+- Return ONLY valid JSON, no additional text
+
+The Axesso API may use different field names like:
+- productTitle, title, or name for product name
+- imgUrl, productImages, images, or imageUrlList for images
+- manufacturer or brand for brand name
+- features, featureBullets, or productDescription for description
+- Extract and use whatever fields are available`;
 
     const aiResponse = await fetch(
       "https://api.openai.com/v1/chat/completions",
@@ -169,6 +165,8 @@ Important:
 
     const aiData = await aiResponse.json();
     const generatedData = JSON.parse(aiData.choices[0].message.content);
+
+    console.log("Generated data:", JSON.stringify(generatedData, null, 2));
 
     return NextResponse.json({
       success: true,
