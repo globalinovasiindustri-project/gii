@@ -20,8 +20,9 @@ import { MultiUploader } from "@/components/ui/multi-uploader";
 
 import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from "react";
-import { Plus, X, FileText, AlertCircle } from "lucide-react";
+import { Plus, X, FileText, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { AIAutofillDialog, type AIGeneratedData } from "./ai-autofill-dialog";
 
 // Form & Validation
 import { useForm } from "react-hook-form";
@@ -84,6 +85,7 @@ function ProductForm({
   const [productImages, setProductImages] = useState<
     Array<{ url: string; isThumbnail: boolean }>
   >([]);
+  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
 
   const toCombinationPayload = (c: any) => ({
     id: typeof c.id === "string" ? c.id : String(c.id),
@@ -115,6 +117,31 @@ function ProductForm({
     setAdditionalDescriptions((prev) =>
       prev.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
     );
+  };
+
+  const handleAIAutofill = (data: AIGeneratedData) => {
+    // Apply AI generated data to form
+    form.setValue("name", data.name);
+    form.setValue("category", data.category as any);
+    form.setValue("brand", data.brand as any);
+    form.setValue("weight", data.weight);
+    form.setValue("description", data.description);
+    setProductWeight(String(data.weight));
+
+    // Apply selected images
+    if (data.selectedImages.length > 0) {
+      const images = data.selectedImages.map((url, index) => ({
+        url,
+        isThumbnail: index === 0, // First image as thumbnail
+      }));
+      setProductImages(images);
+      form.setValue("images", images);
+    }
+
+    toast({
+      title: "Data Berhasil Diterapkan",
+      description: "Informasi produk telah diisi otomatis dengan AI",
+    });
   };
 
   // Handler to update productImages state when images change
@@ -414,6 +441,12 @@ function ProductForm({
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
+      <AIAutofillDialog
+        isOpen={isAIDialogOpen}
+        onClose={() => setIsAIDialogOpen(false)}
+        onApply={handleAIAutofill}
+      />
+
       <div className="flex-1 p-6 overflow-y-scroll max-h-[calc(100vh-160px)]">
         {Object.keys(form.formState.errors).length > 0 && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -425,9 +458,23 @@ function ProductForm({
         <div className="space-y-8">
           {/* Basic Product Information */}
           <div className="space-y-4">
-            <h3 className="tracking-tight font-medium text-muted-foreground">
-              Info Produk
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="tracking-tight font-medium text-muted-foreground">
+                Info Produk
+              </h3>
+              {mode === "create" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAIDialogOpen(true)}
+                  className="gap-2"
+                >
+                  <Sparkles className="size-4" />
+                  Isi otomatis
+                </Button>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -439,7 +486,7 @@ function ProductForm({
                   className={form.formState.errors.name ? "border-red-500" : ""}
                 />
                 {form.formState.errors.name && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-xs text-red-500">
                     {form.formState.errors.name.message}
                   </p>
                 )}
@@ -470,7 +517,7 @@ function ProductForm({
                   </SelectContent>
                 </Select>
                 {form.formState.errors.category && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-xs text-red-500">
                     {form.formState.errors.category.message}
                   </p>
                 )}
@@ -502,7 +549,7 @@ function ProductForm({
                   </SelectContent>
                 </Select>
                 {form.formState.errors.brand && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-xs text-red-500">
                     {form.formState.errors.brand.message}
                   </p>
                 )}
@@ -526,7 +573,7 @@ function ProductForm({
                   }
                 />
                 {form.formState.errors.weight && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-xs text-red-500">
                     {form.formState.errors.weight.message}
                   </p>
                 )}
@@ -545,7 +592,7 @@ function ProductForm({
                 }
               />
               {form.formState.errors.description && (
-                <p className="text-sm text-red-500">
+                <p className="text-xs text-red-500">
                   {form.formState.errors.description.message}
                 </p>
               )}
@@ -705,7 +752,7 @@ function ProductForm({
                       Pilih variant yang akan digunakan
                     </p>
                     {form.formState.errors.variantTypes?.message && (
-                      <p className="text-sm text-red-500">
+                      <p className="text-xs text-red-500">
                         {form.formState.errors.variantTypes.message}
                       </p>
                     )}
@@ -800,7 +847,7 @@ function ProductForm({
                           />
                           {form.formState.errors.combinations?.[index]?.variants
                             ?.message && (
-                            <p className="text-sm text-red-500">
+                            <p className="text-xs text-red-500">
                               {String(
                                 form.formState.errors.combinations[index]
                                   ?.variants?.message || "",
@@ -829,7 +876,7 @@ function ProductForm({
                       />
                       {form.formState.errors.combinations?.[index]?.sku
                         ?.message && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-xs text-red-500">
                           {
                             form.formState.errors.combinations[index].sku
                               ?.message
@@ -862,7 +909,7 @@ function ProductForm({
                       />
                       {form.formState.errors.combinations?.[index]?.price
                         ?.message && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-xs text-red-500">
                           {
                             form.formState.errors.combinations[index].price
                               ?.message
@@ -892,7 +939,7 @@ function ProductForm({
                       />
                       {form.formState.errors.combinations?.[index]?.stock
                         ?.message && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-xs text-red-500">
                           {
                             form.formState.errors.combinations[index].stock
                               ?.message
@@ -987,7 +1034,7 @@ function ProductForm({
                       />
                       {form.formState.errors.additionalDescriptions?.[index]
                         ?.title && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-xs text-red-500">
                           {
                             form.formState.errors.additionalDescriptions[index]
                               .title?.message
@@ -1020,7 +1067,7 @@ function ProductForm({
                       />
                       {form.formState.errors.additionalDescriptions?.[index]
                         ?.body && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-xs text-red-500">
                           {
                             form.formState.errors.additionalDescriptions[index]
                               .body?.message
