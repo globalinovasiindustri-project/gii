@@ -51,6 +51,10 @@ export const PRODUCT_BRANDS = {
   APPLE: { value: "apple", label: "Apple" },
   SAMSUNG: { value: "samsung", label: "Samsung" },
   XIAOMI: { value: "xiaomi", label: "Xiaomi" },
+
+  SONY: { value: "sony", label: "Sony" },
+  LG: { value: "lg", label: "LG" },
+  ASUS: { value: "asus", label: "ASUS" },
 } as const;
 
 export type ProductBrand =

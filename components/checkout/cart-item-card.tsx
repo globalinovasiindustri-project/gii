@@ -31,11 +31,15 @@ export function CartItemCard({
   return (
     <div className="p-4 border border-gray-200 rounded-lg">
       <div className="flex gap-4">
-        <Image
-          src={item.imageSrc}
-          alt={item.imageAlt}
-          className="w-16 h-16 object-cover rounded-md"
-        />
+        <div className=" aspect-square h-full p-4">
+          {" "}
+          <Image
+            src={item.imageSrc}
+            alt={item.imageAlt}
+            className="object-contain h-full mix-blend-multiply"
+          />
+        </div>
+
         <div className="flex-1">
           <h3 className="font-medium text-gray-900">{item.title}</h3>
           <p className="text-sm text-gray-600">{item.brand}</p>

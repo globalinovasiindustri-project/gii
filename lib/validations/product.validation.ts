@@ -17,11 +17,9 @@ const CATEGORY_VALUES = [
   PRODUCT_CATEGORIES.COMPUTER_LAPTOPS.value,
 ] as const;
 
-const BRAND_VALUES = [
-  PRODUCT_BRANDS.APPLE.value,
-  PRODUCT_BRANDS.SAMSUNG.value,
-  PRODUCT_BRANDS.XIAOMI.value,
-] as const;
+const BRAND_VALUES = Object.values(PRODUCT_BRANDS).map(
+  (brand) => brand.value,
+) as [string, ...string[]];
 
 // ====== Variant option (per nilai varian yang tersedia di grup) ======
 export const variantSchema = z.object({

@@ -11,6 +11,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { X } from "lucide-react";
 import { useEffect } from "react";
 
 // Form & Validation
@@ -88,9 +89,19 @@ export function UserSheet({
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="flex flex-col h-full gap-0">
         <SheetHeader className="flex-shrink-0">
-          <SheetTitle>
-            {mode === "edit" ? "Edit User" : "Tambahkan User"}
-          </SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle>
+              {mode === "edit" ? "Edit User" : "Tambahkan User"}
+            </SheetTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="size-8"
+            >
+              <X className="size-5" />
+            </Button>
+          </div>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto py-6">

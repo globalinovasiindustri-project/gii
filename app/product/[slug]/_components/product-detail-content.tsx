@@ -356,16 +356,18 @@ export function ProductDetailContent({
 
   return (
     <>
-      <div className="grid gap-6 md:gap-10 lg:gap-20 md:grid-cols-2">
-        {/* Product Gallery */}
-        <ProductGallery
-          images={galleryImages}
-          selectedIndex={selectedImageIndex}
-          onImageSelect={handleImageSelect}
-        />
+      <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
+        {/* Product Gallery - Left Side (60% width on desktop) - Sticky */}
+        <div className="w-full lg:w-[60%] lg:sticky lg:top-32 lg:self-start">
+          <ProductGallery
+            images={galleryImages}
+            selectedIndex={selectedImageIndex}
+            onImageSelect={handleImageSelect}
+          />
+        </div>
 
-        {/* Product Details */}
-        <div className="space-y-6 md:space-y-8 lg:space-y-10">
+        {/* Product Details - Right Side (40% width on desktop) - Scrollable */}
+        <div className="w-full lg:w-[40%] space-y-6 md:space-y-8">
           <ProductDetails
             brand={productGroup.brand}
             title={productGroup.name}
@@ -379,7 +381,7 @@ export function ProductDetailContent({
             onAddToCart={handleAddToCart}
           />
 
-          {/* Product Description */}
+          {/* Product Description - Below product details */}
           <ProductDescription
             description={
               productGroup.description || "No description available."

@@ -63,7 +63,7 @@ async function getProductBySlug(slug: string): Promise<CompleteProduct | null> {
 async function getRelatedProducts(
   category: string,
   excludeId: string,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<CarouselProduct[]> {
   try {
     const result = await productService.getProductGroups(
@@ -73,7 +73,7 @@ async function getRelatedProducts(
         sortBy: "random",
         limit: limit + 1, // Fetch one extra in case we need to filter out current product
       },
-      "user"
+      "user",
     );
 
     // Filter out current product and limit results
@@ -101,7 +101,7 @@ export async function generateStaticParams() {
         isActive: true,
         limit: 1000, // Fetch all products for static generation
       },
-      "user"
+      "user",
     );
 
     // Map products to slug params array
@@ -201,7 +201,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Fetch related products by category
   const relatedProducts = await getRelatedProducts(
     product.productGroup.category,
-    product.productGroup.id
+    product.productGroup.id,
   );
 
   // Generate structured data for SEO
@@ -219,9 +219,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
 
       <MainNavigation />
-      <main className="flex flex-col w-full space-y-8 md:space-y-12 lg:space-y-20 pb-8 md:pb-12 lg:pb-20">
+      <main className="flex flex-col w-full space-y-8 md:space-y-12 lg:space-y-16 pb-8 md:pb-12 lg:pb-20 max-w-[1400px] mx-auto">
         {/* Product Detail Content */}
-        <div className="px-4 sm:px-6 md:px-10 lg:px-20 mt-4 md:mt-6 lg:mt-10">
+        <div className="px-4 sm:px-6 md:px-10 mt-4 md:mt-6 lg:mt-10">
           <ProductDetailContent productData={product} />
         </div>
         {/* Related Products Carousel */}

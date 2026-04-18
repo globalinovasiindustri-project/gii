@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 import {
@@ -71,6 +72,8 @@ export function ProductDetails({
   onQuantityChange,
   onAddToCart,
 }: ProductDetailsProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
   const handleQuantityChange = (delta: number) => {
     const newQuantity = Math.max(1, quantity + delta);
     const stock = selectedProduct?.stock ?? 0;
@@ -104,7 +107,7 @@ export function ProductDetails({
         </h1>
         {/* Yellow theme */}
         <div className="flex items-center gap-2">
-          <Rating defaultValue={5}>
+          <Rating defaultValue={0}>
             {Array.from({ length: 5 }).map((_, index) => (
               <RatingButton className="text-yellow-500" key={index} />
             ))}
@@ -114,7 +117,23 @@ export function ProductDetails({
       </div>
       <p className="text-2xl font-medium">{formattedPrice}</p>
       {description && (
-        <p className="text-foreground/70 line-clamp-7">{description}</p>
+        <div className="space-y-2">
+          <p className="text-lg font-light">
+            {isDescriptionExpanded || description.length <= 200
+              ? description
+              : `${description.slice(0, 200)}...`}
+          </p>
+          {description.length > 200 && (
+            <button
+              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+              className="text-sm text-gray-600 hover:text-black underline"
+            >
+              {isDescriptionExpanded
+                ? "Tampilkan lebih sedikit"
+                : "Tampilkan semua"}
+            </button>
+          )}
+        </div>
       )}
 
       {/* Variant Selection */}
@@ -233,53 +252,63 @@ export function ProductDetails({
       </div>
 
       {/* Quantity and Add to Cart */}
-      <div className="flex gap-4">
-        <div className="flex items-center gap-1">
+      <div className="space-y-5">
+        <div className="flex gap-5">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => handleQuantityChange(-1)}
+              aria-label="Decrease quantity"
+              disabled={isAddToCartDisabled}
+              className="size-14"
+            >
+              <Minus className="size-4" />
+            </Button>
+            <Input
+              type="text"
+              value={quantity}
+              onChange={(e) =>
+                onQuantityChange(Math.max(1, Number(e.target.value) || 1))
+              }
+              className="h-14 w-20 border-x border-gray-300 text-center [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-outer-spin-button]:m-0"
+              aria-label="Product quantity"
+              disabled={isAddToCartDisabled}
+            />
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => handleQuantityChange(1)}
+              aria-label="Increase quantity"
+              disabled={isAddToCartDisabled}
+              className="size-14"
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
           <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => handleQuantityChange(-1)}
-            aria-label="Decrease quantity"
+            variant="outline"
+            className="flex-1 h-14"
+            onClick={onAddToCart}
             disabled={isAddToCartDisabled}
+            size={"lg"}
           >
-            <Minus className="size-4" />
-          </Button>
-          <Input
-            type="text"
-            value={quantity}
-            onChange={(e) =>
-              onQuantityChange(Math.max(1, Number(e.target.value) || 1))
-            }
-            className="w-12 border-x border-gray-300 text-center [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-outer-spin-button]:m-0"
-            aria-label="Product quantity"
-            disabled={isAddToCartDisabled}
-          />
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => handleQuantityChange(1)}
-            aria-label="Increase quantity"
-            disabled={isAddToCartDisabled}
-          >
-            <Plus className="size-4" />
+            Tambah ke Keranjang
           </Button>
         </div>
         <Button
-          className="flex-1"
-          onClick={onAddToCart}
+          className="w-full h-14"
+          variant="default"
+          onClick={() => {
+            onAddToCart();
+            // Navigate to checkout after adding to cart
+            window.location.href = "/checkout";
+          }}
           disabled={isAddToCartDisabled}
           size={"lg"}
         >
-          Tambah ke Keranjang
+          Bayar Sekarang
         </Button>
-
-        <PrimaryOrionButton
-          onClick={onAddToCart}
-          disabled={isAddToCartDisabled}
-          size={"lg"}
-        >
-          Tambah ke Keranjang
-        </PrimaryOrionButton>
       </div>
     </div>
   );

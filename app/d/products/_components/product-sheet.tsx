@@ -1114,7 +1114,17 @@ export function ProductSheet({
         className="w-full max-w-2xl p-0 tracking-tight sm:max-w-3xl"
       >
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
-          <SheetTitle className="font-normal">Buat Produk</SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle className="font-normal">Buat Produk</SheetTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="size-8"
+            >
+              <X className="size-5" />
+            </Button>
+          </div>
         </SheetHeader>
 
         <ProductForm

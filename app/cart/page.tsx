@@ -169,7 +169,7 @@ export default function CartPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-10 lg:gap-20">
             {/* Left Column - Cart Items List */}
             <div className="lg:col-span-2">
               {/* Validation Warnings */}

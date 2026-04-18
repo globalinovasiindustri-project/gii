@@ -13,7 +13,7 @@ import type { CartItem as CartItemType } from "@/lib/types/cart.types";
 // Helper function to get variant label from value
 const getVariantLabel = (variantValue: string): string => {
   const variant = Object.values(VARIANT_TYPES).find(
-    (v) => v.value === variantValue
+    (v) => v.value === variantValue,
   );
   return variant?.label || variantValue;
 };
@@ -99,7 +99,7 @@ export function CartItem({
     variant === "drawer" ? "gap-4" : "gap-4 md:gap-6",
     "hover:bg-gray-50 px-3 md:px-4 transition-colors",
     isRemoving && "opacity-0 scale-95 h-0 py-0 overflow-hidden",
-    isUpdating && "scale-[0.99]"
+    isUpdating && "scale-[0.99]",
   );
 
   // Generate product detail link from SKU
@@ -111,15 +111,15 @@ export function CartItem({
       <Link href={`/product/${productSlug}`} className="flex-shrink-0">
         <div
           className={cn(
-            "relative overflow-hidden rounded-lg bg-gray-100 hover:opacity-80 transition-opacity cursor-pointer",
-            imageSize
+            "relative aspect-square h-full bg-muted/80 rounded-lg p-4",
+            imageSize,
           )}
         >
           <Image
             src={thumbnailUrl || "/placeholder.svg"}
             alt={name}
             fill
-            className="object-cover"
+            className="object-contain h-full mix-blend-multiply"
           />
         </div>
       </Link>
