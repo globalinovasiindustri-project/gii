@@ -50,7 +50,7 @@ export const cartService = {
         .where(
           isUser
             ? eq(carts.userId, identifier)
-            : eq(carts.sessionId, identifier)
+            : eq(carts.sessionId, identifier),
         )
         .limit(1);
 
@@ -87,7 +87,7 @@ export const cartService = {
         let variantSelections: Record<string, string> = {};
         try {
           variantSelections = JSON.parse(
-            item.cartItem.variantSelections || "{}"
+            item.cartItem.variantSelections || "{}",
           );
         } catch (error) {
           console.error("Error parsing variant selections:", error);
@@ -99,6 +99,7 @@ export const cartService = {
           productId: item.product.id,
           productGroupId: item.product.productGroupId,
           name: item.product.name,
+          brand: item.productGroup.brand,
           sku: item.product.sku,
           price: item.product.price,
           quantity: item.cartItem.quantity,
@@ -165,7 +166,7 @@ export const cartService = {
         let variantSelections: Record<string, string> = {};
         try {
           variantSelections = JSON.parse(
-            item.cartItem.variantSelections || "{}"
+            item.cartItem.variantSelections || "{}",
           );
         } catch (error) {
           console.error("Error parsing variant selections:", error);
@@ -177,6 +178,7 @@ export const cartService = {
           productId: item.product.id,
           productGroupId: item.product.productGroupId,
           name: item.product.name,
+          brand: item.productGroup.brand,
           sku: item.product.sku,
           price: item.product.price,
           quantity: item.cartItem.quantity,
@@ -205,7 +207,7 @@ export const cartService = {
   async addItem(
     identifier: string,
     product: ProductData,
-    quantity: number
+    quantity: number,
   ): Promise<void> {
     try {
       // Validate quantity
@@ -231,30 +233,30 @@ export const cartService = {
       ) {
         const matchingProduct = await productService.findProductByVariants(
           product.productGroupId,
-          product.variantSelections
+          product.variantSelections,
         );
 
         if (!matchingProduct) {
           throw new ValidationError(
-            "Invalid variant combination. This product configuration is not available."
+            "Invalid variant combination. This product configuration is not available.",
           );
         }
 
         if (matchingProduct.id !== product.productId) {
           throw new ValidationError(
-            "Product ID does not match variant selections."
+            "Product ID does not match variant selections.",
           );
         }
 
         if (!matchingProduct.isActive || matchingProduct.isDeleted) {
           throw new ValidationError(
-            "This product configuration is no longer available."
+            "This product configuration is no longer available.",
           );
         }
 
         if (matchingProduct.stock < quantity) {
           throw new ValidationError(
-            `Insufficient stock. Only ${matchingProduct.stock} available for this configuration.`
+            `Insufficient stock. Only ${matchingProduct.stock} available for this configuration.`,
           );
         }
       }
@@ -262,7 +264,7 @@ export const cartService = {
       // Check stock
       if (productData[0].stock < quantity) {
         throw new ValidationError(
-          `Insufficient stock. Only ${productData[0].stock} available`
+          `Insufficient stock. Only ${productData[0].stock} available`,
         );
       }
 
@@ -277,7 +279,7 @@ export const cartService = {
           .where(
             isUser
               ? eq(carts.userId, identifier)
-              : eq(carts.sessionId, identifier)
+              : eq(carts.sessionId, identifier),
           )
           .limit(1);
 
@@ -309,8 +311,8 @@ export const cartService = {
           .where(
             and(
               eq(cartItems.cartId, cartId),
-              eq(cartItems.productId, product.productId)
-            )
+              eq(cartItems.productId, product.productId),
+            ),
           )
           .limit(1);
 
@@ -321,7 +323,7 @@ export const cartService = {
           // Check stock for new quantity
           if (productData[0].stock < newQuantity) {
             throw new ValidationError(
-              `Cannot add ${quantity} more. Only ${productData[0].stock - existingItem[0].quantity} available`
+              `Cannot add ${quantity} more. Only ${productData[0].stock - existingItem[0].quantity} available`,
             );
           }
 
@@ -368,7 +370,7 @@ export const cartService = {
         .where(
           isUser
             ? eq(carts.userId, identifier)
-            : eq(carts.sessionId, identifier)
+            : eq(carts.sessionId, identifier),
         )
         .limit(1);
 
@@ -411,7 +413,7 @@ export const cartService = {
   async updateQuantity(
     identifier: string,
     itemId: string,
-    quantity: number
+    quantity: number,
   ): Promise<void> {
     try {
       // If quantity is 0 or negative, remove the item
@@ -430,7 +432,7 @@ export const cartService = {
         .where(
           isUser
             ? eq(carts.userId, identifier)
-            : eq(carts.sessionId, identifier)
+            : eq(carts.sessionId, identifier),
         )
         .limit(1);
 
@@ -460,7 +462,7 @@ export const cartService = {
       // Check stock
       if (product.stock < quantity) {
         throw new ValidationError(
-          `Insufficient stock. Only ${product.stock} available`
+          `Insufficient stock. Only ${product.stock} available`,
         );
       }
 
@@ -503,7 +505,7 @@ export const cartService = {
         .where(
           isUser
             ? eq(carts.userId, identifier)
-            : eq(carts.sessionId, identifier)
+            : eq(carts.sessionId, identifier),
         )
         .limit(1);
 
@@ -570,7 +572,7 @@ export const cartService = {
         ) {
           const matchingProduct = await productService.findProductByVariants(
             item.productGroupId,
-            item.variantSelections
+            item.variantSelections,
           );
 
           if (!matchingProduct) {
@@ -716,7 +718,7 @@ export const cartService = {
           const existingItem = userItems.find(
             (item) =>
               item.productId === guestItem.productId &&
-              item.variantSelections === guestItem.variantSelections
+              item.variantSelections === guestItem.variantSelections,
           );
 
           if (existingItem) {

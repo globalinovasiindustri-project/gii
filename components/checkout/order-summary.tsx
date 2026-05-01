@@ -22,7 +22,7 @@ export function OrderSummary({
   showCheckoutButton = true,
 }: OrderSummaryProps) {
   return (
-    <div className="sticky top-20 bg-muted rounded-2xl p-8">
+    <div className="sticky top-20 bg-muted rounded-2xl p-10">
       <div className="flex flex-col gap-6">
         <h2 className="text-xl tracking-tight font-medium">
           Ringkasan belanja

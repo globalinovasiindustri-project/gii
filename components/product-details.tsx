@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { VARIANT_TYPES } from "@/lib/enums";
 import type { SelectProduct } from "@/lib/db/schema";
+import { AnimatedButton } from "./ui/animated-button";
 
 // Helper function to get variant label from value
 const getVariantLabel = (variantValue: string): string => {
@@ -296,19 +297,17 @@ export function ProductDetails({
             Tambah ke Keranjang
           </Button>
         </div>
-        <Button
-          className="w-full h-14"
-          variant="default"
+        <AnimatedButton
+          className="w-full"
           onClick={() => {
             onAddToCart();
             // Navigate to checkout after adding to cart
             window.location.href = "/checkout";
           }}
           disabled={isAddToCartDisabled}
-          size={"lg"}
         >
           Bayar Sekarang
-        </Button>
+        </AnimatedButton>
       </div>
     </div>
   );

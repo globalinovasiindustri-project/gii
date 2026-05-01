@@ -19,6 +19,9 @@ import type {
   SelectProduct,
 } from "@/lib/db/schema";
 
+// Enable ISR with 5 minute revalidation
+export const revalidate = 300;
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }

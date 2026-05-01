@@ -187,38 +187,79 @@ export function useAddToCart() {
   });
 }
 
-/**
- * Remove from cart mutation
- */
 export function useRemoveFromCart() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (itemId: string) => cartApi.removeItem(itemId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-      toast.success("Item removed from cart");
+    onMutate: async (itemId) => {
+      await queryClient.cancelQueries({ queryKey: ["cart"] });
+      const previous = queryClient.getQueriesData<CartResponse>({ queryKey: ["cart"] });
+
+      queryClient.setQueriesData<CartResponse>({ queryKey: ["cart"] }, (old) => {
+        if (!old?.data?.items) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            items: old.data.items.filter((item) => item.id !== itemId),
+            lastUpdated: Date.now(),
+          },
+        };
+      });
+
+      return { previous };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _itemId, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
       toast.error(error.message || "Failed to remove item");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
 }
 
-/**
- * Update quantity mutation
- */
 export function useUpdateCartQuantity() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
       cartApi.updateQuantity(itemId, quantity),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    onMutate: async ({ itemId, quantity }) => {
+      await queryClient.cancelQueries({ queryKey: ["cart"] });
+      const previous = queryClient.getQueriesData<CartResponse>({ queryKey: ["cart"] });
+
+      queryClient.setQueriesData<CartResponse>({ queryKey: ["cart"] }, (old) => {
+        if (!old?.data?.items) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            items: old.data.items.map((item) =>
+              item.id === itemId ? { ...item, quantity } : item
+            ),
+            lastUpdated: Date.now(),
+          },
+        };
+      });
+
+      return { previous };
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          queryClient.setQueryData(key, data);
+        }
+      }
       toast.error(error.message || "Failed to update quantity");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
 }

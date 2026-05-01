@@ -49,7 +49,7 @@ const combinationVariantsSchema = z
 export const variantCombinationSchema = z.object({
   id: z.string().optional(),
   variants: combinationVariantsSchema.default({}),
-  sku: z.string().optional(), // SKU is now optional
+  sku: z.string().min(1, { message: "SKU harus diisi" }), // SKU is required
   name: z.string().optional(), // Nama kombinasi tidak ada di UI, boleh dikosongkan/di-derive
   price: z.coerce
     .number({ required_error: "Harga harus diisi" })

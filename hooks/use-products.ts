@@ -51,7 +51,7 @@ export interface ProductFilters {
 const productApi = {
   // Get all product groups with their related data
   getProducts: async (
-    filters: ProductFilters
+    filters: ProductFilters,
   ): Promise<ProductGroupResponse> => {
     // Build query params from filters
     const params = new URLSearchParams();
@@ -196,16 +196,41 @@ export function useOptimisticProductUpdate() {
 
   const updateProductOptimistically = (
     productId: string,
-    updater: (old: CompleteProduct) => CompleteProduct
+    updater: (old: CompleteProduct) => CompleteProduct,
   ) => {
     queryClient.setQueryData(
       ["products", productId],
       (old: CompleteProduct | undefined) => {
         if (!old) return old;
         return updater(old);
-      }
+      },
     );
   };
 
   return { updateProductOptimistically };
+}
+
+// Hook for fetching related/random products (public API)
+export function useRelatedProducts(limit: number = 8) {
+  return useQuery({
+    queryKey: ["related-products", limit],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/products?sortBy=random&limit=${limit}&isActive=true`,
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Gagal memuat produk terkait");
+      }
+
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    meta: {
+      onError: (error: Error) => {
+        console.error("Failed to load related products:", error.message);
+      },
+    },
+  });
 }
