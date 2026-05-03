@@ -10,6 +10,7 @@ import {
   lte,
   asc,
   desc,
+  not,
 } from "drizzle-orm";
 import {
   productGroups,
@@ -25,6 +26,7 @@ import { UserRole } from "../enums";
 import { hasPermission } from "../utils/permissions";
 import { generateSlug } from "../utils/product.utils";
 import type { ValidVariantCombinations } from "../types/product.types";
+import { ValidationError } from "../errors/custom-errors";
 
 type WhereCondition = SQL<unknown> | undefined;
 type VariantSelection = Record<string, string>;
@@ -104,7 +106,7 @@ function createPriceFilters(filters: ProductFilters): {
 // Filters based on user role permissions (isActive visibility)
 function createRoleBasedFilters(
   filters: ProductFilters,
-  role: UserRole
+  role: UserRole,
 ): WhereCondition[] {
   const conditions: WhereCondition[] = [];
 
@@ -124,7 +126,7 @@ function createRoleBasedFilters(
 
 function createVariantFilters(
   groupIds: string[],
-  role: UserRole
+  role: UserRole,
 ): WhereCondition[] {
   const conditions: WhereCondition[] = [
     inArray(productVariants.productGroupId, groupIds),
@@ -139,7 +141,7 @@ function createVariantFilters(
 
 function createProductFilters(
   groupIds: string[],
-  role: UserRole
+  role: UserRole,
 ): WhereCondition[] {
   const conditions: WhereCondition[] = [
     inArray(products.productGroupId, groupIds),
@@ -157,10 +159,10 @@ async function getProductGroups(
   conditions: WhereCondition[],
   sortBy?: "newest" | "random" | "price-low" | "price-high" | "popularity",
   limit?: number,
-  offset?: number
+  offset?: number,
 ): Promise<SelectProductGroup[]> {
   const validConditions = conditions.filter(
-    (c): c is SQL<unknown> => c !== undefined
+    (c): c is SQL<unknown> => c !== undefined,
   );
 
   let query = db.select().from(productGroups);
@@ -177,7 +179,7 @@ async function getProductGroups(
   } else if (sortBy === "popularity") {
     query = query.orderBy(
       sql`${productGroups.isHighlighted} DESC`,
-      sql`RANDOM()`
+      sql`RANDOM()`,
     ) as typeof query;
   }
   // Note: price-low and price-high sorting will be handled in the main service method
@@ -198,10 +200,10 @@ async function getProductGroupsWithPrice(
   conditions: WhereCondition[],
   sortBy?: "newest" | "random" | "price-low" | "price-high" | "popularity",
   limit?: number,
-  offset?: number
+  offset?: number,
 ): Promise<SelectProductGroup[]> {
   const validConditions = conditions.filter(
-    (c): c is SQL<unknown> => c !== undefined
+    (c): c is SQL<unknown> => c !== undefined,
   );
 
   // Create a subquery to get minimum price per product group
@@ -237,7 +239,7 @@ async function getProductGroupsWithPrice(
     .from(productGroups)
     .leftJoin(
       priceSubquery,
-      eq(productGroups.id, priceSubquery.productGroupId)
+      eq(productGroups.id, priceSubquery.productGroupId),
     );
 
   if (validConditions.length > 0) {
@@ -252,7 +254,7 @@ async function getProductGroupsWithPrice(
   } else if (sortBy === "popularity") {
     query = query.orderBy(
       desc(productGroups.isHighlighted),
-      sql`RANDOM()`
+      sql`RANDOM()`,
     ) as typeof query;
   } else if (sortBy === "random") {
     query = query.orderBy(sql`RANDOM()`) as typeof query;
@@ -276,10 +278,10 @@ async function getProductGroupsWithPrice(
 }
 
 async function countProductGroups(
-  conditions: WhereCondition[]
+  conditions: WhereCondition[],
 ): Promise<number> {
   const validConditions = conditions.filter(
-    (c): c is SQL<unknown> => c !== undefined
+    (c): c is SQL<unknown> => c !== undefined,
   );
 
   let query = db
@@ -295,10 +297,10 @@ async function countProductGroups(
 }
 
 async function getVariants(
-  conditions: WhereCondition[]
+  conditions: WhereCondition[],
 ): Promise<SelectProductVariant[]> {
   const validConditions = conditions.filter(
-    (c): c is SQL<unknown> => c !== undefined
+    (c): c is SQL<unknown> => c !== undefined,
   );
 
   if (validConditions.length === 0) return [];
@@ -310,10 +312,10 @@ async function getVariants(
 }
 
 async function getProductsList(
-  conditions: WhereCondition[]
+  conditions: WhereCondition[],
 ): Promise<SelectProduct[]> {
   const validConditions = conditions.filter(
-    (c): c is SQL<unknown> => c !== undefined
+    (c): c is SQL<unknown> => c !== undefined,
   );
 
   if (validConditions.length === 0) return [];
@@ -336,7 +338,7 @@ async function getVariantCombinations(productIds: string[]) {
 // === Data Grouping Utilities ===
 function groupBy<T extends { id: string }>(
   items: T[],
-  getKey: (item: T) => string
+  getKey: (item: T) => string,
 ): Map<string, T[]> {
   const grouped = new Map<string, T[]>();
 
@@ -351,7 +353,7 @@ function groupBy<T extends { id: string }>(
 
 function createVariantSelections(
   combinations: Array<{ productId: string; variantId: string }>,
-  variants: SelectProductVariant[]
+  variants: SelectProductVariant[],
 ): Map<string, VariantSelection> {
   const variantsMap = new Map(variants.map((v) => [v.id, v]));
   const selectionsMap = new Map<string, VariantSelection>();
@@ -377,7 +379,7 @@ function assembleCompleteProducts(
   >,
   variantsByGroup: Map<string, SelectProductVariant[]>,
   productsByGroup: Map<string, SelectProduct[]>,
-  variantSelections: Map<string, VariantSelection>
+  variantSelections: Map<string, VariantSelection>,
 ): CompleteProduct[] {
   return groups.map((group) => {
     const groupProducts = productsByGroup.get(group.id) ?? [];
@@ -387,7 +389,7 @@ function assembleCompleteProducts(
       variants: variantsByGroup.get(group.id) ?? [],
       products: groupProducts,
       variantSelectionsByProductId: Object.fromEntries(
-        groupProducts.map((p) => [p.id, variantSelections.get(p.id) ?? {}])
+        groupProducts.map((p) => [p.id, variantSelections.get(p.id) ?? {}]),
       ),
     };
   });
@@ -397,7 +399,7 @@ function assembleCompleteProducts(
 export const productService = {
   async getProductGroups(
     filters: ProductFilters,
-    viewerRole: UserRole
+    viewerRole: UserRole,
   ): Promise<{
     products: CompleteProduct[];
     totalCount: number;
@@ -468,8 +470,8 @@ export const productService = {
                 : undefined,
               priceFilters.maxPrice !== undefined
                 ? lte(products.price, priceFilters.maxPrice)
-                : undefined
-            )
+                : undefined,
+            ),
           )
           .groupBy(products.productGroupId)
           .as("price_filtered_groups");
@@ -483,7 +485,7 @@ export const productService = {
         finalFilters,
         filters.sortBy,
         limit,
-        offset
+        offset,
       );
     } else {
       // Use the simpler query without price joins
@@ -491,7 +493,7 @@ export const productService = {
         finalFilters,
         filters.sortBy,
         limit,
-        offset
+        offset,
       );
     }
 
@@ -557,7 +559,7 @@ export const productService = {
       >,
       variantsByGroup,
       productsByGroup,
-      variantSelections
+      variantSelections,
     );
 
     return {
@@ -571,7 +573,7 @@ export const productService = {
 
   async getProductGroupBySlug(
     slug: string,
-    viewerRole: UserRole
+    viewerRole: UserRole,
   ): Promise<CompleteProduct | null> {
     // Step 1: Direct database query by slug with isActive and isDeleted filters
     const fetchedProductGroups = await db
@@ -581,8 +583,8 @@ export const productService = {
         and(
           eq(productGroups.slug, slug),
           eq(productGroups.isActive, true),
-          eq(productGroups.isDeleted, false)
-        )
+          eq(productGroups.isDeleted, false),
+        ),
       )
       .limit(1);
 
@@ -634,7 +636,7 @@ export const productService = {
       variants: variants,
       products: productsList,
       variantSelectionsByProductId: Object.fromEntries(
-        productsList.map((p) => [p.id, variantSelections.get(p.id) ?? {}])
+        productsList.map((p) => [p.id, variantSelections.get(p.id) ?? {}]),
       ),
     };
   },
@@ -683,7 +685,7 @@ export const productService = {
     } catch (error) {
       console.error("Error creating product group:", error);
       throw new Error(
-        `Gagal membuat grup produk: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Gagal membuat grup produk: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   },
@@ -700,7 +702,7 @@ export const productService = {
       isHighlighted?: boolean;
       additionalDescriptions?: Array<{ title: string; body: string }>;
       images?: Array<{ url: string; isThumbnail: boolean }>;
-    }>
+    }>,
   ): Promise<SelectProductGroup> {
     try {
       const updateData: Partial<typeof productGroups.$inferInsert> = {};
@@ -747,16 +749,29 @@ export const productService = {
     } catch (error) {
       console.error("Error updating product group:", error);
       throw new Error(
-        `Gagal memperbarui grup produk: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Gagal memperbarui grup produk: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   },
 
   async createCompleteProduct(
-    data: CreateProductData
+    data: CreateProductData,
   ): Promise<CompleteProductResult> {
     try {
       return await db.transaction(async (tx) => {
+        // Step 0: Check if product group name already exists
+        const existingProductGroup = await tx
+          .select({ id: productGroups.id })
+          .from(productGroups)
+          .where(eq(productGroups.name, data.name))
+          .limit(1);
+
+        if (existingProductGroup.length > 0) {
+          throw new ValidationError(
+            `Product group with name "${data.name}" already exists`,
+          );
+        }
+
         // Step 1: Create product group
         const slug = generateSlug(data.name);
 
@@ -792,7 +807,7 @@ export const productService = {
 
           for (const combination of data.combinations) {
             for (const [variantType, variantValue] of Object.entries(
-              combination.variants
+              combination.variants,
             )) {
               if (!variantValuesByType.has(variantType)) {
                 variantValuesByType.set(variantType, new Set());
@@ -852,7 +867,7 @@ export const productService = {
             Object.keys(combination.variants).length > 0
           ) {
             for (const [variantType, variantValue] of Object.entries(
-              combination.variants
+              combination.variants,
             )) {
               const variantId = createdVariants
                 .get(variantType)
@@ -876,17 +891,35 @@ export const productService = {
     } catch (error) {
       console.error("Error creating complete product:", error);
       throw new Error(
-        `Gagal membuat produk lengkap: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Gagal membuat produk lengkap: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   },
 
   async updateCompleteProduct(
     id: string,
-    data: UpdateProductData
+    data: UpdateProductData,
   ): Promise<CompleteProductResult> {
     try {
       return await db.transaction(async (tx) => {
+        // Step 0: Check if product group name already exists (excluding current product)
+        const existingProductGroup = await tx
+          .select({ id: productGroups.id })
+          .from(productGroups)
+          .where(
+            and(
+              eq(productGroups.name, data.name),
+              not(eq(productGroups.id, id)),
+            ),
+          )
+          .limit(1);
+
+        if (existingProductGroup.length > 0) {
+          throw new ValidationError(
+            `Product group with name "${data.name}" already exists`,
+          );
+        }
+
         // Step 1: Update product group
         const slug = generateSlug(data.name);
 
@@ -933,7 +966,7 @@ export const productService = {
           await tx
             .delete(productVariantCombinations)
             .where(
-              inArray(productVariantCombinations.productId, existingProductIds)
+              inArray(productVariantCombinations.productId, existingProductIds),
             );
         }
 
@@ -954,7 +987,7 @@ export const productService = {
 
           for (const combination of data.combinations) {
             for (const [variantType, variantValue] of Object.entries(
-              combination.variants
+              combination.variants,
             )) {
               if (!variantValuesByType.has(variantType)) {
                 variantValuesByType.set(variantType, new Set());
@@ -1014,7 +1047,7 @@ export const productService = {
             Object.keys(combination.variants).length > 0
           ) {
             for (const [variantType, variantValue] of Object.entries(
-              combination.variants
+              combination.variants,
             )) {
               const variantId = createdVariants
                 .get(variantType)
@@ -1038,7 +1071,7 @@ export const productService = {
     } catch (error) {
       console.error("Error updating complete product:", error);
       throw new Error(
-        `Gagal memperbarui produk lengkap: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Gagal memperbarui produk lengkap: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   },
@@ -1053,8 +1086,8 @@ export const productService = {
       .where(
         and(
           eq(productGroups.isActive, true),
-          eq(productGroups.isDeleted, false)
-        )
+          eq(productGroups.isDeleted, false),
+        ),
       )
       .groupBy(productGroups.category)
       .orderBy(productGroups.category);
@@ -1072,8 +1105,8 @@ export const productService = {
       .where(
         and(
           eq(productGroups.isActive, true),
-          eq(productGroups.isDeleted, false)
-        )
+          eq(productGroups.isDeleted, false),
+        ),
       )
       .groupBy(productGroups.brand)
       .orderBy(productGroups.brand);
@@ -1094,8 +1127,8 @@ export const productService = {
           eq(products.isActive, true),
           eq(products.isDeleted, false),
           eq(productGroups.isActive, true),
-          eq(productGroups.isDeleted, false)
-        )
+          eq(productGroups.isDeleted, false),
+        ),
       );
 
     return result[0] || { min: 0, max: 0 };
@@ -1124,8 +1157,8 @@ export const productService = {
         and(
           eq(products.productGroupId, productGroupId),
           eq(products.isActive, true),
-          eq(products.isDeleted, false)
-        )
+          eq(products.isDeleted, false),
+        ),
       );
 
     // If no products, return empty structure
@@ -1190,7 +1223,7 @@ export const productService = {
 
       // Track variant types
       Object.keys(variantSelections).forEach((type) =>
-        variantTypesSet.add(type)
+        variantTypesSet.add(type),
       );
 
       return {
@@ -1238,7 +1271,7 @@ export const productService = {
    */
   async findProductByVariants(
     productGroupId: string,
-    variantSelections: Record<string, string>
+    variantSelections: Record<string, string>,
   ): Promise<SelectProduct | null> {
     // Handle edge case: empty variant selections
     if (Object.keys(variantSelections).length === 0) {
@@ -1250,8 +1283,8 @@ export const productService = {
           and(
             eq(products.productGroupId, productGroupId),
             eq(products.isActive, true),
-            eq(products.isDeleted, false)
-          )
+            eq(products.isDeleted, false),
+          ),
         )
         .limit(1);
 
@@ -1266,8 +1299,8 @@ export const productService = {
         and(
           eq(products.productGroupId, productGroupId),
           eq(products.isActive, true),
-          eq(products.isDeleted, false)
-        )
+          eq(products.isDeleted, false),
+        ),
       );
 
     if (productsList.length === 0) {
@@ -1323,7 +1356,7 @@ export const productService = {
 
       // Check if all variant selections match
       const isMatch = variantKeys.every(
-        (key) => productVariants[key] === variantSelections[key]
+        (key) => productVariants[key] === variantSelections[key],
       );
 
       if (isMatch) {

@@ -3,7 +3,7 @@
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Package, Copy, Check } from "lucide-react";
+import { Package, Copy, Check, X } from "lucide-react";
 import { CompleteOrder } from "@/hooks/use-orders";
 import { formatCurrency, formatAddress, cn } from "@/lib/utils";
 import { formatPaymentStatus } from "@/lib/utils/status.utils";
@@ -111,6 +111,14 @@ export function OrderSheet({
                 </Button>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="size-8"
+            >
+              <X className="size-5" />
+            </Button>
           </div>
 
           {/* Order Timeline - Vertical */}
@@ -132,7 +140,7 @@ export function OrderSheet({
                         status === "upcoming" &&
                           "border-muted-foreground/30 bg-background",
                         status === "cancelled" &&
-                          "border-destructive bg-background"
+                          "border-destructive bg-background",
                       )}
                     >
                       {(status === "completed" || status === "current") && (
@@ -145,7 +153,7 @@ export function OrderSheet({
                           "w-0.5 h-8",
                           status === "completed"
                             ? "bg-primary"
-                            : "bg-muted-foreground/30"
+                            : "bg-muted-foreground/30",
                         )}
                       />
                     )}
@@ -156,7 +164,7 @@ export function OrderSheet({
                     <p
                       className={cn(
                         "font-medium text-sm",
-                        status === "upcoming" && "text-muted-foreground"
+                        status === "upcoming" && "text-muted-foreground",
                       )}
                     >
                       {step.label}
@@ -269,7 +277,7 @@ export function OrderSheet({
                         {item.orderItem.quantity} x{" "}
                         {formatCurrency(
                           item.orderItem.subtotal,
-                          order.currency
+                          order.currency,
                         )}
                       </p>
                     </div>

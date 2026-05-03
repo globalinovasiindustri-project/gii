@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/id";
+import { OrderStatusStepper } from "./order-status-stepper";
 
 dayjs.extend(relativeTime);
 dayjs.locale("id");
@@ -25,14 +26,14 @@ dayjs.locale("id");
 // Helper function to get variant label from value
 const getVariantLabel = (variantValue: string): string => {
   const variant = Object.values(VARIANT_TYPES).find(
-    (v) => v.value === variantValue
+    (v) => v.value === variantValue,
   );
   return variant?.label || variantValue;
 };
 
 // Format variant selections for display with Indonesian labels
 const formatVariantSelections = (
-  variantSelections: Record<string, string> | null
+  variantSelections: Record<string, string> | null,
 ): string => {
   if (!variantSelections || Object.keys(variantSelections).length === 0) {
     return "";
@@ -263,12 +264,23 @@ export function OrderCard({ order, isHighlighted = false }: OrderCardProps) {
 
         {isExpanded && (
           <div className="mt-4 border-t border-dashed space-y-4">
+            {/* Order Status Stepper */}
+            <div className="pt-4">
+              <h3 className="font-medium text-sm mb-2">Status Pesanan</h3>
+              <div className="mx-10">
+                <OrderStatusStepper
+                  currentStatus={order.orderStatus as any}
+                  createdAt={order.createdAt}
+                />
+              </div>
+            </div>
+
             {/* Order Items (Requirement 2.3) */}
-            <div className="space-y-3 pt-4">
+            <div className="space-y-3 pt-4 border-t">
               <h3 className="font-medium text-sm">Daftar Pesanan</h3>
               {order.orderItems.map((item) => {
                 const variantText = formatVariantSelections(
-                  item.variantSelections
+                  item.variantSelections,
                 );
                 return (
                   <div

@@ -3,9 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, Minus, Trash2 } from "lucide-react";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { VARIANT_TYPES } from "@/lib/enums";
 import type { CartItem as CartItemType } from "@/lib/types/cart.types";
@@ -13,7 +10,7 @@ import type { CartItem as CartItemType } from "@/lib/types/cart.types";
 // Helper function to get variant label from value
 const getVariantLabel = (variantValue: string): string => {
   const variant = Object.values(VARIANT_TYPES).find(
-    (v) => v.value === variantValue
+    (v) => v.value === variantValue,
   );
   return variant?.label || variantValue;
 };
@@ -35,11 +32,19 @@ export function CartItem({
   onRemove,
   onSelectionChange,
 }: CartItemProps) {
-  const { id, name, price, quantity, thumbnailUrl, variantSelections, sku } =
-    item;
+  const {
+    id,
+    name,
+    brand,
+    price,
+    quantity,
+    stock,
+    thumbnailUrl,
+    variantSelections,
+    sku,
+  } = item;
 
   const [isRemoving, setIsRemoving] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [localQuantity, setLocalQuantity] = useState(quantity);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -62,9 +67,13 @@ export function CartItem({
       return;
     }
 
-    // Update local state immediately for responsive UI
+    if (newQuantity > stock) {
+      newQuantity = stock;
+    }
+
+    if (newQuantity === localQuantity) return;
+
     setLocalQuantity(newQuantity);
-    setIsUpdating(true);
 
     // Debounce the actual update (500ms)
     if (debounceTimerRef.current) {
@@ -73,7 +82,6 @@ export function CartItem({
 
     debounceTimerRef.current = setTimeout(() => {
       onQuantityChange(id, newQuantity);
-      setIsUpdating(false);
     }, 500);
   };
 
@@ -95,11 +103,9 @@ export function CartItem({
 
   const imageSize = variant === "drawer" ? "size-20" : "size-24 md:size-32";
   const containerClasses = cn(
-    "flex py-4 md:py-6 gap-3 md:gap-4 transition-all duration-300 ease-in-out",
-    variant === "drawer" ? "gap-4" : "gap-4 md:gap-6",
-    "hover:bg-gray-50 px-3 md:px-4 transition-colors",
+    "flex py-4 md:py-8 gap-3 md:gap-4 transition-all duration-300 ease-in-out",
+    variant === "drawer" ? "gap-4 py-4" : "gap-4",
     isRemoving && "opacity-0 scale-95 h-0 py-0 overflow-hidden",
-    isUpdating && "scale-[0.99]"
   );
 
   // Generate product detail link from SKU
@@ -111,65 +117,48 @@ export function CartItem({
       <Link href={`/product/${productSlug}`} className="flex-shrink-0">
         <div
           className={cn(
-            "relative overflow-hidden rounded-lg bg-gray-100 hover:opacity-80 transition-opacity cursor-pointer",
-            imageSize
+            "aspect-square bg-muted/80 rounded-lg p-3 flex items-center justify-center",
+            imageSize,
           )}
         >
           <Image
             src={thumbnailUrl || "/placeholder.svg"}
             alt={name}
-            fill
-            className="object-cover"
+            width={128}
+            height={128}
+            className="object-contain w-full h-full mix-blend-multiply"
           />
         </div>
       </Link>
 
       {/* Product Details */}
-      <div className="flex flex-col justify-between gap-2 md:gap-3 flex-1 min-w-0">
-        {/* Product Info */}
-        <div className="flex flex-col gap-1">
-          <Link
-            href={`/product/${productSlug}`}
-            className="hover:text-blue-600 transition-colors"
-          >
-            <h3 className="text-sm md:text-base line-clamp-2">{name}</h3>
-          </Link>
-          {variantText && (
-            <p className="text-xs md:text-sm text-gray-500">{variantText}</p>
+      <div className="grid grid-cols-5 gap-4 justify-between items-center w-full">
+        {/* Left side: Product Info */}
+        <div
+          className={cn(
+            "flex flex-col gap-1",
+            variant === "page" ? "col-span-4 md:col-span-3" : "col-span-3",
           )}
+        >
+          <p className="text-sm md:text-base">{name}</p>
+          <p className="text-xs md:text-sm text-muted-foreground font-light capitalize">
+            {brand}
+          </p>
+          {variantText && (
+            <p className="text-xs md:text-sm text-muted-foreground font-light">
+              {variantText}
+            </p>
+          )}
+          <p className="font-light text-sm md:text-[15px] mt-1">
+            Rp{price.toLocaleString("id-ID")}
+          </p>
         </div>
 
-        {/* Price and Quantity Controls */}
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <p className="font-medium text-sm md:text-base">
-              Rp{price.toLocaleString("id-ID")}
-            </p>
-            {variant === "page" && (
-              <p className="text-xs md:text-sm text-gray-600">
-                Subtotal: Rp{subtotal.toLocaleString("id-ID")}
-              </p>
-            )}
-          </div>
-
-          {/* Quantity Controls */}
-          <div className="flex items-center justify-between">
-            <div className="flex flex-row gap-1">
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => handleQuantityChange(localQuantity - 1)}
-                aria-label="Kurangi jumlah"
-              >
-                {localQuantity > 1 ? (
-                  <Minus className="size-4" strokeWidth={1.5} />
-                ) : (
-                  <Trash2 className="size-4" strokeWidth={1.5} />
-                )}
-              </Button>
-
-              <Input
+        {/* Right side: Quantity Controls */}
+        <div className="col-span-1 items-start md:items-end gap-2">
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+            <div className="relative">
+              <input
                 type="number"
                 value={localQuantity}
                 onChange={(e) => {
@@ -178,36 +167,76 @@ export function CartItem({
                     handleQuantityChange(newQuantity);
                   }
                 }}
-                className="w-12 h-8 border-0 bg-gray-100 text-sm text-center [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-outer-spin-button]:m-0"
-                aria-label="Jumlah produk"
+                className="w-16 h-12 text-center text-sm bg-muted/75 rounded-sm pr-6 focus:outline-none focus:ring-1 focus:ring-gray-400 [-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:opacity-0 [&::-webkit-outer-spin-button]:opacity-0 hover:[&::-webkit-inner-spin-button]:opacity-100 hover:[&::-webkit-outer-spin-button]:opacity-100"
+                aria-label="Quantity"
                 min="1"
+                max={stock}
               />
-
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => handleQuantityChange(localQuantity + 1)}
-                aria-label="Tambah jumlah"
-              >
-                <Plus className="size-4" strokeWidth={1.5} />
-              </Button>
+              <div className="absolute right-0 top-0 hidden lg:flex flex-col h-full w-6 pointer-events-none">
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(localQuantity + 1)}
+                  className="flex-1 flex items-end justify-center pb-0.5 pointer-events-auto"
+                  aria-label="Increase quantity"
+                >
+                  <svg
+                    className="w-2 h-1.5"
+                    viewBox="0 0 8 6"
+                    stroke="currentColor"
+                    fill="none"
+                    strokeWidth="1"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M0.5 4.75L4 1.25L7.5 4.75"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuantityChange(localQuantity - 1)}
+                  className="flex-1 flex items-start justify-center pt-0.5 pointer-events-auto"
+                  aria-label="Decrease quantity"
+                >
+                  <svg
+                    className="w-2 h-1.5"
+                    viewBox="0 0 8 6"
+                    stroke="currentColor"
+                    fill="none"
+                    strokeWidth="1"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M0.5 1.25L4 4.75L7.5 1.25"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
 
-            {/* Remove button (visible in page variant or always for drawer) */}
-            {variant === "page" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={handleRemove}
-                aria-label="Hapus item"
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            )}
+            <button
+              onClick={handleRemove}
+              className="text-xs underline hover:no-underline transition-all"
+              aria-label="Remove item"
+            >
+              Hapus
+            </button>
           </div>
         </div>
+
+        {/* Subtotal */}
+        {variant === "page" && (
+          <div className="hidden md:flex col-span-1 justify-end">
+            {" "}
+            <p className="text-sm md:text-base font-medium">
+              Rp{subtotal.toLocaleString("id-ID")}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

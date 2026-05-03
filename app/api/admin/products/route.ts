@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { productService } from "@/lib/services/product.service";
 import { ProductFilters } from "@/hooks/use-products";
 import { decodeUserRole } from "@/lib/utils/token.utils";
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
           totalPages: result.totalPages,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
     return NextResponse.json(
       {
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
           totalPages: result.totalPages,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     const { response, statusCode } = formatErrorResponse(error);
@@ -83,13 +84,18 @@ export async function POST(request: NextRequest) {
     // Call service method - all business logic is in service
     const result = await productService.createCompleteProduct(validatedData);
 
+    // Revalidate shop listing to show new product
+    revalidatePath("/shop");
+    revalidatePath(`/product/${result.productGroup.slug}`);
+    revalidatePath("/"); // Revalidate homepage to show in "Terbaru" section
+
     return NextResponse.json(
       {
         success: true,
         message: "Product created successfully",
         data: result,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     const { response, statusCode } = formatErrorResponse(error);

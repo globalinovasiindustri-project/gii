@@ -16,6 +16,8 @@ export interface CartItem {
   productGroupId: string;
   /** Product name (snapshot at time of adding) */
   name: string;
+  /** Product brand (snapshot at time of adding) */
+  brand: string;
   /** Product SKU (snapshot) */
   sku: string;
   /** Price at time of adding */
@@ -63,7 +65,7 @@ export interface CartStorageData {
  */
 export type CartItemIdGenerator = (
   productId: string,
-  variantSelections: Record<string, string>
+  variantSelections: Record<string, string>,
 ) => string;
 
 /**

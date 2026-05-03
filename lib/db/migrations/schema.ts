@@ -25,16 +25,16 @@ export const productVariantCombinations = pgTable(
   (table) => [
     index("pvc_product_id_idx").using(
       "btree",
-      table.productId.asc().nullsLast().op("uuid_ops")
+      table.productId.asc().nullsLast().op("uuid_ops"),
     ),
     index("pvc_product_variant_idx").using(
       "btree",
       table.productId.asc().nullsLast().op("uuid_ops"),
-      table.variantId.asc().nullsLast().op("uuid_ops")
+      table.variantId.asc().nullsLast().op("uuid_ops"),
     ),
     index("pvc_variant_id_idx").using(
       "btree",
-      table.variantId.asc().nullsLast().op("uuid_ops")
+      table.variantId.asc().nullsLast().op("uuid_ops"),
     ),
     foreignKey({
       columns: [table.productId],
@@ -46,7 +46,7 @@ export const productVariantCombinations = pgTable(
       foreignColumns: [productVariants.id],
       name: "product_variant_combinations_variant_id_product_variants_id_fk",
     }).onDelete("cascade"),
-  ]
+  ],
 );
 
 export const productVariants = pgTable(
@@ -68,14 +68,14 @@ export const productVariants = pgTable(
   (table) => [
     index("pv_product_group_id_idx").using(
       "btree",
-      table.productGroupId.asc().nullsLast().op("uuid_ops")
+      table.productGroupId.asc().nullsLast().op("uuid_ops"),
     ),
     foreignKey({
       columns: [table.productGroupId],
       foreignColumns: [productGroups.id],
       name: "product_variants_product_group_id_product_groups_id_fk",
     }).onDelete("cascade"),
-  ]
+  ],
 );
 
 export const products = pgTable(
@@ -99,19 +99,18 @@ export const products = pgTable(
   (table) => [
     index("p_product_group_id_idx").using(
       "btree",
-      table.productGroupId.asc().nullsLast().op("uuid_ops")
+      table.productGroupId.asc().nullsLast().op("uuid_ops"),
     ),
     index("p_sku_idx").using(
       "btree",
-      table.sku.asc().nullsLast().op("text_ops")
+      table.sku.asc().nullsLast().op("text_ops"),
     ),
     foreignKey({
       columns: [table.productGroupId],
       foreignColumns: [productGroups.id],
       name: "products_product_group_id_product_groups_id_fk",
     }).onDelete("cascade"),
-    unique("products_sku_unique").on(table.sku),
-  ]
+  ],
 );
 
 export const verifyCodes = pgTable(
@@ -136,7 +135,7 @@ export const verifyCodes = pgTable(
       foreignColumns: [users.id],
       name: "verify_codes_user_id_users_id_fk",
     }),
-  ]
+  ],
 );
 
 export const productGroups = pgTable(
@@ -161,7 +160,7 @@ export const productGroups = pgTable(
     isHighlighted: boolean("is_highlighted").default(false).notNull(),
     slug: text().notNull(),
   },
-  (table) => [unique("product_groups_slug_unique").on(table.slug)]
+  (table) => [unique("product_groups_slug_unique").on(table.slug)],
 );
 
 export const users = pgTable(
@@ -184,7 +183,7 @@ export const users = pgTable(
     phone: text(),
     dateOfBirth: timestamp("date_of_birth", { mode: "string" }),
   },
-  (table) => [unique("users_email_unique").on(table.email)]
+  (table) => [unique("users_email_unique").on(table.email)],
 );
 
 export const addresses = pgTable(
@@ -216,18 +215,18 @@ export const addresses = pgTable(
     index("addr_default_idx").using(
       "btree",
       table.userId.asc().nullsLast().op("bool_ops"),
-      table.isDefault.asc().nullsLast().op("bool_ops")
+      table.isDefault.asc().nullsLast().op("bool_ops"),
     ),
     index("addr_user_id_idx").using(
       "btree",
-      table.userId.asc().nullsLast().op("uuid_ops")
+      table.userId.asc().nullsLast().op("uuid_ops"),
     ),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [users.id],
       name: "addresses_user_id_users_id_fk",
     }).onDelete("cascade"),
-  ]
+  ],
 );
 
 export const orderItems = pgTable(
@@ -249,11 +248,11 @@ export const orderItems = pgTable(
   (table) => [
     index("oi_order_id_idx").using(
       "btree",
-      table.orderId.asc().nullsLast().op("uuid_ops")
+      table.orderId.asc().nullsLast().op("uuid_ops"),
     ),
     index("oi_product_id_idx").using(
       "btree",
-      table.productId.asc().nullsLast().op("uuid_ops")
+      table.productId.asc().nullsLast().op("uuid_ops"),
     ),
     foreignKey({
       columns: [table.orderId],
@@ -265,7 +264,7 @@ export const orderItems = pgTable(
       foreignColumns: [products.id],
       name: "order_items_product_id_products_id_fk",
     }).onDelete("set null"),
-  ]
+  ],
 );
 
 export const cartItems = pgTable(
@@ -286,16 +285,16 @@ export const cartItems = pgTable(
   (table) => [
     index("ci_cart_id_idx").using(
       "btree",
-      table.cartId.asc().nullsLast().op("uuid_ops")
+      table.cartId.asc().nullsLast().op("uuid_ops"),
     ),
     index("ci_cart_product_idx").using(
       "btree",
       table.cartId.asc().nullsLast().op("uuid_ops"),
-      table.productId.asc().nullsLast().op("uuid_ops")
+      table.productId.asc().nullsLast().op("uuid_ops"),
     ),
     index("ci_product_id_idx").using(
       "btree",
-      table.productId.asc().nullsLast().op("uuid_ops")
+      table.productId.asc().nullsLast().op("uuid_ops"),
     ),
     foreignKey({
       columns: [table.cartId],
@@ -307,7 +306,7 @@ export const cartItems = pgTable(
       foreignColumns: [products.id],
       name: "cart_items_product_id_products_id_fk",
     }).onDelete("cascade"),
-  ]
+  ],
 );
 
 export const orders = pgTable(
@@ -349,23 +348,23 @@ export const orders = pgTable(
   (table) => [
     index("order_created_at_idx").using(
       "btree",
-      table.createdAt.asc().nullsLast().op("timestamp_ops")
+      table.createdAt.asc().nullsLast().op("timestamp_ops"),
     ),
     index("order_number_idx").using(
       "btree",
-      table.orderNumber.asc().nullsLast().op("text_ops")
+      table.orderNumber.asc().nullsLast().op("text_ops"),
     ),
     index("order_payment_status_idx").using(
       "btree",
-      table.paymentStatus.asc().nullsLast().op("text_ops")
+      table.paymentStatus.asc().nullsLast().op("text_ops"),
     ),
     index("order_status_idx").using(
       "btree",
-      table.orderStatus.asc().nullsLast().op("text_ops")
+      table.orderStatus.asc().nullsLast().op("text_ops"),
     ),
     index("order_user_id_idx").using(
       "btree",
-      table.userId.asc().nullsLast().op("uuid_ops")
+      table.userId.asc().nullsLast().op("uuid_ops"),
     ),
     foreignKey({
       columns: [table.userId],
@@ -373,7 +372,7 @@ export const orders = pgTable(
       name: "orders_user_id_users_id_fk",
     }).onDelete("set null"),
     unique("orders_order_number_unique").on(table.orderNumber),
-  ]
+  ],
 );
 
 export const carts = pgTable(
@@ -398,7 +397,7 @@ export const carts = pgTable(
       .where(sql`(session_id IS NOT NULL)`),
     index("cart_user_id_idx").using(
       "btree",
-      table.userId.asc().nullsLast().op("uuid_ops")
+      table.userId.asc().nullsLast().op("uuid_ops"),
     ),
     foreignKey({
       columns: [table.userId],
@@ -407,7 +406,7 @@ export const carts = pgTable(
     }).onDelete("cascade"),
     check(
       "carts_identifier_check",
-      sql`(user_id IS NOT NULL) OR (session_id IS NOT NULL)`
+      sql`(user_id IS NOT NULL) OR (session_id IS NOT NULL)`,
     ),
-  ]
+  ],
 );

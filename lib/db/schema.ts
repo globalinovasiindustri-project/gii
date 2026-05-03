@@ -111,9 +111,9 @@ export const productVariants = pgTable(
   },
   (table) => ({
     productGroupIdIdx: index("pv_product_group_id_idx").on(
-      table.productGroupId
+      table.productGroupId,
     ),
-  })
+  }),
 );
 
 export type InsertProductVariant = typeof productVariants.$inferInsert;
@@ -127,7 +127,7 @@ export const products = pgTable(
     productGroupId: uuid("product_group_id")
       .references(() => productGroups.id, { onDelete: "cascade" })
       .notNull(),
-    sku: text("sku").notNull().unique(), // e.g., "IPHONE-15-128GB-BLACK"
+    sku: text("sku").notNull(), // e.g., "IPHONE-15-128GB-BLACK"
     name: text("name").notNull(), // e.g., "iPhone 15 128GB Black"
     price: integer("price").notNull(), // Harga dalam smallest currency unit (e.g., cents/rupiah)
     stock: integer("stock").notNull().default(0),
@@ -139,7 +139,7 @@ export const products = pgTable(
   (table) => ({
     productGroupIdIdx: index("p_product_group_id_idx").on(table.productGroupId),
     skuIdx: index("p_sku_idx").on(table.sku),
-  })
+  }),
 );
 
 export type InsertProduct = typeof products.$inferInsert;
@@ -163,9 +163,9 @@ export const productVariantCombinations = pgTable(
     variantIdIdx: index("pvc_variant_id_idx").on(table.variantId),
     productVariantIdx: index("pvc_product_variant_idx").on(
       table.productId,
-      table.variantId
+      table.variantId,
     ),
-  })
+  }),
 );
 
 export type InsertProductVariantCombination =
@@ -208,7 +208,7 @@ export const addresses = pgTable(
   (table) => ({
     userIdIdx: index("addr_user_id_idx").on(table.userId),
     defaultIdx: index("addr_default_idx").on(table.userId, table.isDefault),
-  })
+  }),
 );
 
 export type InsertAddress = typeof addresses.$inferInsert;
@@ -233,9 +233,9 @@ export const carts = pgTable(
     // Ensure at least one identifier exists
     identifierCheck: check(
       "carts_identifier_check",
-      sql`${table.userId} IS NOT NULL OR ${table.sessionId} IS NOT NULL`
+      sql`${table.userId} IS NOT NULL OR ${table.sessionId} IS NOT NULL`,
     ),
-  })
+  }),
 );
 
 export type InsertCart = typeof carts.$inferInsert;
@@ -265,9 +265,9 @@ export const cartItems = pgTable(
     productIdIdx: index("ci_product_id_idx").on(table.productId),
     cartProductIdx: index("ci_cart_product_idx").on(
       table.cartId,
-      table.productId
+      table.productId,
     ),
-  })
+  }),
 );
 
 export type InsertCartItem = typeof cartItems.$inferInsert;
@@ -335,9 +335,9 @@ export const orders = pgTable(
     paymentStatusIdx: index("order_payment_status_idx").on(table.paymentStatus),
     createdAtIdx: index("order_created_at_idx").on(table.createdAt),
     midtransOrderIdIdx: index("order_midtrans_order_id_idx").on(
-      table.midtransOrderId
+      table.midtransOrderId,
     ),
-  })
+  }),
 );
 
 export type InsertOrder = typeof orders.$inferInsert;
@@ -375,8 +375,47 @@ export const orderItems = pgTable(
   (table) => ({
     orderIdIdx: index("oi_order_id_idx").on(table.orderId),
     productIdIdx: index("oi_product_id_idx").on(table.productId),
-  })
+  }),
 );
 
 export type InsertOrderItem = typeof orderItems.$inferInsert;
 export type SelectOrderItem = typeof orderItems.$inferSelect;
+
+// App Config table (singleton - stores global application settings)
+export const appConfig = pgTable("app_config", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  // Landing page
+  heroImages: text("hero_images"), // JSON array of image URLs
+
+  // Contact info
+  contactPhone: text("contact_phone").notNull(),
+  contactEmail: text("contact_email").notNull(),
+
+  // Social media
+  socialInstagram: text("social_instagram"),
+  socialTiktok: text("social_tiktok"),
+  socialWhatsapp: text("social_whatsapp"),
+
+  // Shipping origin
+  shippingOriginAddress: text("shipping_origin_address").notNull(),
+  shippingOriginCity: text("shipping_origin_city").notNull(),
+  shippingOriginProvince: text("shipping_origin_province").notNull(),
+  shippingOriginPostalCode: text("shipping_origin_postal_code").notNull(),
+
+  // Tax settings
+  taxEnabled: boolean("tax_enabled").notNull().default(false),
+  taxPercentage: integer("tax_percentage").notNull().default(11), // Stored as integer (11 = 11%)
+
+  // Order settings
+  pendingOrderTimeLimitHours: integer("pending_order_time_limit_hours")
+    .notNull()
+    .default(24),
+
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type InsertAppConfig = typeof appConfig.$inferInsert;
+export type SelectAppConfig = typeof appConfig.$inferSelect;

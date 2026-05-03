@@ -51,7 +51,7 @@ export function ProductDetailContent({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<SelectProduct | null>(
-    null
+    null,
   );
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [validCombinations, setValidCombinations] =
@@ -65,7 +65,7 @@ export function ProductDetailContent({
     async function loadValidCombinations() {
       try {
         const response = await fetch(
-          `/api/products/${productGroup.id}/valid-combinations`
+          `/api/products/${productGroup.id}/valid-combinations`,
         );
         if (!response.ok) {
           throw new Error("Failed to load valid combinations");
@@ -80,7 +80,7 @@ export function ProductDetailContent({
         for (const variantType of combinations.variantTypes) {
           // Find first available value for this variant type
           const availableValues = Object.entries(
-            combinations.availabilityMap[variantType] || {}
+            combinations.availabilityMap[variantType] || {},
           )
             .filter(([_, isAvailable]) => isAvailable)
             .map(([value]) => value);
@@ -90,7 +90,7 @@ export function ProductDetailContent({
             const firstWithStock = combinations.combinations.find(
               (combo) =>
                 combo.variants[variantType] === availableValues[0] &&
-                combo.stock > 0
+                combo.stock > 0,
             );
 
             if (firstWithStock) {
@@ -116,7 +116,7 @@ export function ProductDetailContent({
   // Calculate which options are available based on current selections
   const updateAvailableOptions = (
     currentSelections: Record<string, string>,
-    combinations: ValidVariantCombinations
+    combinations: ValidVariantCombinations,
   ) => {
     const available: Record<string, Set<string>> = {};
 
@@ -129,7 +129,7 @@ export function ProductDetailContent({
         // If this combination matches all current selections (except this variant type)
         const matches = Object.entries(currentSelections).every(
           ([type, value]) =>
-            type === variantType || combo.variants[type] === value
+            type === variantType || combo.variants[type] === value,
         );
 
         // Only mark as available if it matches and has stock
@@ -199,7 +199,7 @@ export function ProductDetailContent({
     const variantGroups = getVariantGroups();
     if (variantGroups.length > 0) {
       const allVariantsSelected = variantGroups.every(
-        (group) => selectedVariants[group.type]
+        (group) => selectedVariants[group.type],
       );
 
       if (!allVariantsSelected) {
@@ -273,7 +273,7 @@ export function ProductDetailContent({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ variantSelections: selections }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -313,7 +313,7 @@ export function ProductDetailContent({
         acc[variant.variant].push(variant);
         return acc;
       },
-      {} as Record<string, SelectProductVariant[]>
+      {} as Record<string, SelectProductVariant[]>,
     );
 
     // Convert to array format with availability info from availableOptions state
@@ -356,16 +356,18 @@ export function ProductDetailContent({
 
   return (
     <>
-      <div className="grid gap-6 md:gap-10 lg:gap-20 lg:grid-cols-2">
-        {/* Product Gallery */}
-        <ProductGallery
-          images={galleryImages}
-          selectedIndex={selectedImageIndex}
-          onImageSelect={handleImageSelect}
-        />
+      <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
+        {/* Product Gallery - Left Side (60% width on desktop) - Sticky */}
+        <div className="w-full lg:w-[60%] lg:sticky lg:top-32 lg:self-start">
+          <ProductGallery
+            images={galleryImages}
+            selectedIndex={selectedImageIndex}
+            onImageSelect={handleImageSelect}
+          />
+        </div>
 
-        {/* Product Details */}
-        <div className="space-y-6 md:space-y-8 lg:space-y-10">
+        {/* Product Details - Right Side (40% width on desktop) - Scrollable */}
+        <div className="w-full lg:w-[40%] space-y-6 md:space-y-8">
           <ProductDetails
             brand={productGroup.brand}
             title={productGroup.name}
@@ -379,7 +381,7 @@ export function ProductDetailContent({
             onAddToCart={handleAddToCart}
           />
 
-          {/* Product Description */}
+          {/* Product Description - Below product details */}
           <ProductDescription
             description={
               productGroup.description || "No description available."

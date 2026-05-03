@@ -9,16 +9,6 @@ export const settingsSchema = z.object({
   contactEmail: z.string().email("Email tidak valid"),
 
   // Social media
-  socialTwitter: z
-    .string()
-    .url("URL Twitter tidak valid")
-    .optional()
-    .or(z.literal("")),
-  socialFacebook: z
-    .string()
-    .url("URL Facebook tidak valid")
-    .optional()
-    .or(z.literal("")),
   socialInstagram: z
     .string()
     .url("URL Instagram tidak valid")
@@ -42,6 +32,7 @@ export const settingsSchema = z.object({
   shippingOriginPostalCode: z.string().min(1, "Kode pos wajib diisi"),
 
   // Tax
+  taxEnabled: z.boolean(),
   taxPercentage: z
     .number()
     .min(0, "Pajak tidak boleh negatif")

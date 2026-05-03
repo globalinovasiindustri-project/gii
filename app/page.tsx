@@ -9,8 +9,9 @@ import { StoryBanner } from "@/components/story-banner";
 import { formatPrice } from "@/lib/utils/product.utils";
 import { productService } from "@/lib/services/product.service";
 
-// Revalidate every hour for fresh content while maintaining static generation
-export const revalidate = 3600;
+// Revalidate every 10 minutes for fresh content while maintaining static generation
+// Homepage is high-traffic, so we want fresh "newest products" section
+export const revalidate = 600; // 10 minutes
 
 interface SimplifiedProduct {
   id: string;
@@ -40,7 +41,7 @@ interface CarouselProduct {
 }
 
 async function fetchProducts(
-  sortBy: "newest" | "random"
+  sortBy: "newest" | "random",
 ): Promise<CarouselProduct[]> {
   try {
     // Fetch directly from service for better performance and SEO
@@ -50,7 +51,7 @@ async function fetchProducts(
         sortBy: sortBy,
         limit: 10,
       },
-      "user"
+      "user",
     );
 
     // Transform to carousel format
